@@ -3,16 +3,18 @@ import { Avatar } from 'react-native-paper';
 import { Text, View, StyleSheet,ImageBackground,TouchableOpacity,Image,SafeAreaView,FlatList} from 'react-native';
 import FormButton from '@/components/FormButton';
 import {PickImage} from '@/components/PickImage';
+import { Services } from '@/services/';
 
 function SettingScreen({navigation}) {
-  const [message, setMessage] = useState('');
-  const [icon, setIcon] = useState('https://cdn.iconscout.com/icon/free/png-512/avatar-372-456324.png');
+  const [userData, setUserData] = useState([]);
 
   useEffect(() => {
-    setMessage('Setting page!');
+    Services.get('user/profile',(data)=>setUserData(data));
   }, []);
 
-  const code = 'LWY00812';
+  const change_pic = (uri) => {
+    Services.change_pic(uri,()=>Services.get('user/profile',(data)=>setUserData(data)) );
+  }
 
   return (
     <ImageBackground
@@ -22,10 +24,9 @@ function SettingScreen({navigation}) {
     >
       <SafeAreaView style={styles.container}>
         <View style={styles.upper}>
-          <Text style={{fontSize:19, marginBottom:8}}>李泳兒</Text>
-          <Text style={{fontSize:17, marginBottom:30}}>會員編號：{code}</Text>
-          <Avatar.Image size={160} source={{ uri: icon }} />
-          {/* source={require(icon) */}
+          <Text style={{fontSize:19, marginBottom:8}}>{userData.name}</Text>
+          <Text style={{fontSize:17, marginBottom:30}}>會員編號：{userData.member_number}</Text>
+          <Avatar.Image size={160} source={{ uri: userData.pic }} />
         </View>
 
         <View style={styles.wrapper}>
@@ -35,11 +36,12 @@ function SettingScreen({navigation}) {
             modeValue='contained'
             labelStyle={{fontSize: 20}}
             onPress = {() => {
-              PickImage(setIcon);
+              PickImage(change_pic);
             }}
           />
           <FormButton
             onPress={() => navigation.navigate('password')}
+            //  onPress={() => Services.get('user/profile',(data)=>setUserData(data))}
             title='更改密碼'
             addStyle={{marginTop:18}}
             modeValue='contained'

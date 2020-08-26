@@ -1,48 +1,51 @@
 import React, { useState, useEffect } from 'react';
-import { FlatList, SafeAreaView, ImageBackground, StyleSheet, Text, TouchableOpacity } from "react-native";
-
-const DATA = [
-  {
-    id: "1",
-    title: "消息名稱",
-    date: "27/10/2016",
-    content: "消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容"
-  },
-  {
-    id: "2",
-    title: "消息名稱",
-    date: "27/10/2016",
-    content: "消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容"
-  },
-  {
-    id: "3",
-    title: "消息名稱",
-    date: "27/10/2016",
-    content: "消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容"
-  },
-];
-
-const Item = ({ item, onPress, style }) => (
-  <TouchableOpacity onPress={onPress} style={[styles.item, style]}>
-    <Text style={styles.title}>{item.title}</Text>
-    <Text style={styles.date}>{item.date}</Text>
-    <Text numberOfLines={3} style={styles.content}>{item.content}</Text>
-    
-  </TouchableOpacity>
-);
+import { View,Image ,FlatList, SafeAreaView, ImageBackground, StyleSheet, Text, TouchableOpacity, ScrollView} from "react-native";
+import { Services } from '@/services/';
 
 function NewsScreen({navigation}) {
-  const [selectedId, setSelectedId] = useState(null);
+  const [data, setData] = useState([]);
+  const [end, setEnd] = useState(false);
+  const [page, setPage] = useState(1);
 
-  const renderItem = ({ item }) => {
+  useEffect(() => {
+    Services.get('news?page=1',addToData);
+  }, []);
+
+  const addToData = (newData) => {
+    if(newData.data.length>0) {
+      setData(data.concat(newData.data) );
+      setPage(page+1);
+    }
+      else setEnd(true);
+  }
+
+  const handleScroll = (event) => {
+    if(!end && (event.nativeEvent.contentSize.height - event.nativeEvent.layoutMeasurement.height - event.nativeEvent.contentOffset.y) < 10 ) {
+      // alert('news?page='+(page));
+      Services.get('news?page='+(page),addToData);
+    };
+  }
+
+  const renderItem = ({item}) => {
 
     return (
-      <Item
-        item={item}
-        onPress={() => navigation.push('detail',  {item: item})}
-        // onPress={() => setSelectedId(item.id)}
-        // style={{ backgroundColor }}
-      />
+      <TouchableOpacity onPress={() => navigation.push('detail',  {item: item})} style={styles.item}>
+      <View style={styles.row}>
+        <View style>
+          <Text style={styles.title}>{item.title}</Text>
+          <Text style={styles.date}>2019-0-1</Text>
+          {/* {item.date_for_display} */}
+        </View>
+        <View style = {{width:50,height:50}}>
+          <Image 
+              source={{ uri: item.pic }}
+              style={{height:'100%'}}
+              resizeMode="contain"
+        />
+        </View>
+      </View>
+      <Text numberOfLines={3} style={styles.content}>{item.description}</Text>
+    </TouchableOpacity>
     );
   };
 
@@ -54,13 +57,14 @@ function NewsScreen({navigation}) {
         resizeMode='cover' 
         source={require('@/img/background-6.png')}
       >
-        
-        <FlatList
-          data={DATA}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          extraData={selectedId}
-        />
+        <ScrollView onScroll={event=> {handleScroll(event);}}>
+          <FlatList
+            data={data}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id}
+            // extraData={}
+          />
+        </ScrollView>
 
       </ImageBackground>
     </SafeAreaView>
@@ -71,7 +75,15 @@ function NewsScreen({navigation}) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    
+  },
+  row: {
+    width: '100%',
+    // backgroundColor: 'green',
+    display:'flex',
+    // flexWrap: 'nowrap',
+    flexDirection:'row',
+    justifyContent: 'space-between',
+    // flex: 0,
   },
   item: {
     padding: 20,

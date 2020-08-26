@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FlatList, Image, SafeAreaView, View, ImageBackground, StyleSheet, Text, TouchableOpacity,TouchableWithoutFeedback,AsyncStorage } from "react-native";
+import { Services } from '@/services/';
 
 const DATA = [
   {
@@ -47,76 +48,48 @@ const DATA = [
 ];
 
 function InfoScreen({navigation}) {
-  const [like_stored, setLike] = useState([]);
-  const [data_orig,setDataOrig] = useState([]);
   const [data,setData] = useState([]);
+  const [end, setEnd] = useState(false);
+  const [page, setPage] = useState(1);
+  const [update,setUpdate] = useState(0);
+  const [fav,setFav] = useState('');
 
   useEffect(() => {
-    const DATA_sort = DATA.slice(0);
-    DATA_sort.sort(function(a,b){
-      return new Date(b.start_date) - new Date(a.start_date);
-    });
-    setDataOrig(DATA_sort);
-    setData(DATA_sort);
-    _retrieveData();
-    return () => {
-      // _storeData();
+    Services.get('events?page=1'+fav,addToData);
+  }, []);
+
+  const addToData = (newData) => {
+    if(newData.data.length>0) {
+      setData(data.concat(newData.data) );
+      setPage(page+1);
+      console.log(newData);
     }
-  }, [])
+      else setEnd(true);
+  }
 
-  useEffect(() => {
-    _storeData();
-  }, [like_stored]);
+  const handleScroll = (event) => {
+    if(!end && (event.nativeEvent.contentSize.height - event.nativeEvent.layoutMeasurement.height - event.nativeEvent.contentOffset.y) < 10 ) {
+      Services.get('events?page='+page+fav,addToData);
+    };
+  }
 
-  const _storeData = async () => {
-    // console.log(like_stored);
-    const data_str = JSON.stringify(like_stored);
-    try {
-      await AsyncStorage.setItem('@activity_info', data_str);
-    } catch (error) {
-      // Error saving data
-    }
-  };
+  const reset_data = (data) => {
+    setData(data.data);
+  }
 
-  const _retrieveData = async () => {
-    try {
-      const value = await AsyncStorage.getItem('@activity_info');
-      if (value !== null) {
-        setLike(JSON.parse(value));
-      }
-     } catch (error) {
-       // Error retrieving data
-     }
-  };
-
-  const sort_by_like = () => {
-    let data_ = JSON.parse(JSON.stringify(data_orig));
-    for(i=0;i<like_stored.length;i++){
-      if( data_.find(x => x.id === like_stored[i])) data_.find(x => x.id === like_stored[i]).liked = true;
-    }
-    data_.sort(function(x, y) {
-      return (x.liked === y.liked)? 0 : x.liked? -1 : 1;
-    });
+  const change_like = (index) => {
+    let data_ = data;
+    data_[index].is_fav = !data_[index].is_fav;
     setData(data_);
-    // console.log(data);
+    setUpdate(update+1);
   }
 
-  const change_like = (item,like) => {
-    if(!like) setLike(like_stored.concat(item.id));
-      else setLike(like_stored.filter(x => x != item.id));
-  }
-
-  const renderItem = ({item}) => {
-    let like = false;
+  const renderItem = ({item,index}) => {
     let like_url = require("@/img/icon_like-3.png") ;
-    if(like_stored.length>0 && like_stored.find(x => x === item.id)) { 
-      like_url = require("@/img/icon_like-2.png");
-      like = true;
-    }
-    if(like) like_url = require("@/img/icon_like-2.png");
+    if(item.is_fav) like_url = require("@/img/icon_like-2.png");
     return(
       <TouchableOpacity 
-        onPress={() => navigation.navigate('detail',  {item: item, like_pass:like, change_like:change_like})} 
+        onPress={() => navigation.navigate('detail',  {item: item})} 
         style={[styles.item]}
       >
         <Image 
@@ -126,10 +99,11 @@ function InfoScreen({navigation}) {
         <View style={styles.content}>
           <View style={styles.line}>
             <Text numberOfLines={1} style={styles.title}>{item.title}</Text> 
+
             <TouchableWithoutFeedback
               onPress={() => {
-                change_like(item,like);
-                like=!like;
+                Services.fav_toggle(item.id);
+                change_like(index);
               }}
             >
               <Image 
@@ -138,9 +112,10 @@ function InfoScreen({navigation}) {
                 resizeMode="contain"
               />
             </TouchableWithoutFeedback>
+
           </View>
-          <Text style={styles.text}>活動日期： {item.date_for_display}</Text>
-          <Text style={styles.text}>活動時間： {item.time}</Text>
+          {/* <Text style={styles.text}>活動日期： {item.date_for_display}</Text> */}
+          {/* <Text style={styles.text}>活動時間： {item.time}</Text> */}
         </View>
         
       </TouchableOpacity>
@@ -157,11 +132,9 @@ function InfoScreen({navigation}) {
       <TouchableOpacity 
         style={styles.button}
         onPress={() => {
-          sort_by_like();
-          setLike(like_stored.concat(-1));
-          setTimeout(() => {
-            setLike(like_stored.filter(x => x != -1));
-          }, 100);
+          setFav('&favFirst=y');
+          setPage(1);
+          Services.get('events?page=1&favFirst=y',reset_data);
         }}
       >
         <Text style={styles.buttonText}>以</Text>
@@ -174,10 +147,10 @@ function InfoScreen({navigation}) {
       </TouchableOpacity>         
         
         <FlatList
+          onScroll={event=> {handleScroll(event)}}
           data={data}
           renderItem={renderItem}
-          // keyExtractor={(item) => item.id}
-          extraData={data}
+          extraData={update}
           style={{width:'100%'}}
         />
 
@@ -219,12 +192,12 @@ const styles = StyleSheet.create({
   content: {
     width: '60%',
     marginLeft: 'auto',
-    // backgroundColor: 'red',
+    height: '100%',
   },
   title: {
     width: '90%',
     fontSize: 20,
-    marginBottom: 20,
+    // marginBottom: 20,
     color: '#994278',
   },
   text: {
@@ -235,7 +208,10 @@ const styles = StyleSheet.create({
   line: {
     flex:0,
     flexDirection: 'row',
-    // alignItems: 'center',
+    // backgroundColor: 'red',
+    height: 30,
+    alignItems: 'center',
+    marginBottom: 10,
   },
   image: {
     width: '35%',

@@ -2,7 +2,7 @@ import axios from 'axios';
 import storage from '@/utils/storage';
 
 const api = axios.create({
-  baseURL: 'https://api.github.com',
+  baseURL: 'http://yiuonapp.itisdemo.com/api/',
 });
 
 api.interceptors.request.use(async (config) => {
@@ -11,6 +11,7 @@ api.interceptors.request.use(async (config) => {
   const headers = { ...config.headers };
 
   if (token) {
+    // console.log(token);
     headers.Authorization = `Bearer ${token}`;
   }
 

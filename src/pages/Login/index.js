@@ -1,26 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ImageBackground, Image, Text, TouchableHighlight} from 'react-native';
+import { View, StyleSheet, ImageBackground, Image, Text, TouchableHighlight, SafeAreaView, ScrollView} from 'react-native';
 import { Title } from 'react-native-paper';
 import FormInput from '@/components/FormInput';
 import FormButton from '@/components/FormButton';
-import { userService } from '@/services/user_service';
+import { Services } from '@/services/';
 
-
-function handleLogin(number,password) {
-  userService.login(number,password);
-}
 
 export default function LoginScreen({navigation}) {
   const [number, setNumber] = useState('');
   const [password, setPassword] = useState('');
+  const [fail, setFail] = useState(0);
+  
+  const handleLogin = (number,password,setFail) => {
+    if(number!=''&&password!='') Services.logIn(number,password,setFail);
+  }
 
   return (
-    <ImageBackground
-      style={{width: '100%', height: '100%'}}
-      resizeMode='cover' 
-      source={require('@/img/background-1.png')}
-    > 
-      <View style={styles.container}>
+    <SafeAreaView>
+      <ImageBackground
+        style={{width: '100%', height: '100%'}}
+        resizeMode='cover' 
+        source={require('@/img/background-1.png')}
+      > 
+      <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.titleText}>
           基督教聖約教會{"\n"}
           耀安長者鄰舍中心
@@ -33,33 +35,28 @@ export default function LoginScreen({navigation}) {
         <View style={styles.loginWrapper}>
           <Title style={styles.inputText}>登入編號</Title>
           <FormInput
-            // labelName=''
-            // value={email}
             autoCapitalize='none'
-            onChangeText={userNumber => setNumber(userNumber)}
+            onChangeText={userNumber => {setNumber(userNumber);setFail(0);}}
           />
           <Title style={styles.inputText}>密碼</Title>
           <FormInput
-            // labelName='Password'
-            // value={password}
             secureTextEntry={true}
-            onChangeText={userPassword => setPassword(userPassword)}
+            onChangeText={userPassword => {setPassword(userPassword);setFail(0);}}
           />
+          <Text style={{marginTop:10, opacity:fail}}>登入失敗！</Text>
           <FormButton
             title='登入'
-            addStyle={{marginTop:30}}
+            addStyle={{marginTop:10}}
             modeValue='contained'
             labelStyle={{fontSize: 20}}
             onPress={() => {
-              handleLogin(number,password);
-              // console.log(navigation);
-              // navigation.navigate('Main');
+              handleLogin(number,password,setFail);
             }}
           />
         </View>
         <FormButton
             title='忘記密碼'
-            addStyle={{marginTop:15}}
+            addStyle={{marginTop:10}}
             modeValue='text'
             uppercase={false}
             labelStyle={{fontSize: 16}}
@@ -85,15 +82,18 @@ export default function LoginScreen({navigation}) {
               />
             </TouchableHighlight>
           </View>
-      </View>
+
+      </ScrollView>
+
     </ImageBackground>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    paddingTop: 50,
+    // flex: 1,
+    paddingTop: 40,
     // justifyContent: 'center',
     alignItems: 'center'
   },
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     // backgroundColor: 'red',
     marginTop: 10,
     width: '90%',
-    height: 110
+    height: 110,
   },
   bottomButton: {
     height: '100%', 

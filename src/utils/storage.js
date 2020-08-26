@@ -2,13 +2,12 @@ import { AsyncStorage } from 'react-native';
 
 const prefix = '@AppName:';
 
-const storageKeys = {
-  token: `${prefix}token`,
-};
+// const storageKeys = {
+//   token: `${prefix}token`,
+// };
 
 export default {
-  // Token
-  setToken: async (token) => AsyncStorage.setItem(storageKeys.token, token),
-  getToken: async () => AsyncStorage.getItem(storageKeys.token),
-  removeToken: async () => AsyncStorage.removeItem(storageKeys.token),
+  setToken: async (token) => AsyncStorage.setItem('token', token),
+  getToken: async () => AsyncStorage.getItem('token'),
+  removeToken: async () => AsyncStorage.removeItem('token'),
 };

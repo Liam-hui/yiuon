@@ -5,6 +5,8 @@ const LOGIN_REQUEST = "app/duck/LOGIN_REQUEST";
 const LOGOUT_REQUEST = "app/duck/LOGOUT_REQUEST ";
 
 const LOGIN_FINISH= "app/duck/LOGIN_FINISH";
+const LOGOUT_FINISH= "app/duck/LOGOUT_FINISH";
+
 
 export default {
     DRAWER_TURNON,
@@ -12,4 +14,5 @@ export default {
     LOGIN_REQUEST,
     LOGOUT_REQUEST,
     LOGIN_FINISH,
+    LOGOUT_FINISH,
 };

@@ -1,84 +1,73 @@
 import React, {useState, useEffect } from 'react';
-import { Text, View, StyleSheet,ImageBackground,TouchableOpacity,Image,SafeAreaView,FlatList} from 'react-native';
-import { Avatar,IconButton } from 'react-native-paper';
-
-const DATA = [
-  {
-    id: "1",
-    title: "唱遊小組_1",
-    date: "27/10/2016",
-    content: "消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容"
-  },
-  {
-    id: "2",
-    title: "唱遊小組_2",
-    date: "27/10/2016",
-    content: "消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容"
-  },
-  {
-    id: "3",
-    title: "唱遊小組_3",
-    date: "27/10/2016",
-    content: "消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容消息內容"
-  },
-];
+import { Text, View, StyleSheet,ImageBackground,TouchableOpacity,Image,SafeAreaView,ScrollView,FlatList} from 'react-native';
+import { IconButton } from 'react-native-paper';
+import { Services } from '@/services/';
 
 const Item = ({ item, onPress, style }) => (
   <TouchableOpacity onPress={onPress} style={styles.item} >
     <Image 
-          source={require('@/img/photo_test.jpg')}
+          source={{ uri: item.pic}}
           style={{width:'100%', height:'100%'}}
           resizeMode="cover"
     />
     <View style={styles.title}>
-      <Text style={{color: '#A24982',fontSize:20}}>sfsf</Text>
+      <Text style={{color: '#A24982',fontSize:20}}>{item.title}</Text>
     </View>
   </TouchableOpacity>
 );
 
 
 function AlbumScreen({ navigation,route}) {
-  const [selectedId, setSelectedId] = useState(null);
+  const [data, setData] = useState([]);
+  const [end, setEnd] = useState(false);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
+    Services.get('albums?page=1',addToData);
+
     navigation.setParams({
-      // color_mode: 2,
       right: renderHeaderRight,
     });
   }, []);
 
+  const addToData = (newData) => {
+    if(newData.data.length>0) {
+      setData(data.concat(newData.data) );
+      setPage(page+1);
+    }
+      else setEnd(true);
+  }
+
+  const handleScroll = (event) => {
+    if(!end && (event.nativeEvent.contentSize.height - event.nativeEvent.layoutMeasurement.height - event.nativeEvent.contentOffset.y) < 10 ) {
+      Services.get('albums?page='+(page),addToData);
+    };
+  }
+
   const renderHeaderRight = () => (
     <TouchableOpacity
-          // onPress={() => {navigation.dispatch(DrawerActions.openDrawer());}}
-          // onPress={navigation.goBack}
-          
-        >
+      onPress={() => navigation.navigate('add-photo',  {newAlbum: true})}
+    >
         <IconButton
           icon="plus"
           color={'#000000'}
           size={30}
-          onPress={() => navigation.navigate('add-photo')}
         />
     </TouchableOpacity>
   )
 
   const renderItem = ({ item }) => {
-
     return (
-      <Item
-        item={item}
-        onPress={() => navigation.navigate('album-open',  {title:item.title, item: item})}
-        // onPress={() =>
-        //   {
-        //     navigation.setParams({
-        //     title:"abc"
-        //   });
-        //   // console.log(route.params);
-        // }
-        // }
-        // onPress={() => setSelectedId(item.id)}
-        // style={{ backgroundColor }}
-      />
+      <TouchableOpacity onPress={() => navigation.navigate('album-open',  {title:item.title, item: item})} style={styles.item} >
+        <Image 
+              source={{ uri: item.pic}}
+              style={{width:'100%', height:'100%'}}
+              resizeMode="cover"
+        />
+        <View style={styles.title}>
+          <Text style={{color: '#A24982',fontSize:20}}>{item.title}</Text>
+        </View>
+      </TouchableOpacity>
     );
   };
 
@@ -90,12 +79,14 @@ function AlbumScreen({ navigation,route}) {
     >
       <SafeAreaView style={styles.container}>
         
-        <FlatList
-          data={DATA}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          extraData={selectedId}
-        />
+        <ScrollView onScroll={event=> {handleScroll(event);}}>
+          <FlatList
+            data={data}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id}
+            // extraData={selectedId}
+          />
+        </ScrollView>
 
 
       </SafeAreaView>

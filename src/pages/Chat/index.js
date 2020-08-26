@@ -48,23 +48,6 @@ const Item = ({ item, onPress, style }) => {
     </TouchableOpacity>
 )};
 
-const renderHeaderRight = () => (
-  <TouchableOpacity
-        // onPress={() => {navigation.dispatch(DrawerActions.openDrawer());}}
-        // onPress={navigation.goBack}
-      >
-     <IconButton
-        icon={({ size}) => (
-          <Image
-            source={require('@/img/Btn_add_chat.png')}
-            style={{ width: size, height: size, resizeMode:'contain'}}
-          />
-        )}
-        size={30}
-      />
-  </TouchableOpacity>
-)
-
 function ChatScreen({navigation}) {
   const [selectedId, setSelectedId] = useState(null);
 
@@ -74,6 +57,22 @@ function ChatScreen({navigation}) {
       right: renderHeaderRight,
     });
   }, []);
+
+  const renderHeaderRight = () => (
+    <TouchableOpacity
+      onPress={() => {navigation.navigate('create-single-chat')} }
+    >
+       <IconButton
+          icon={({ size}) => (
+            <Image
+              source={require('@/img/Btn_add_chat.png')}
+              style={{ width: size, height: size, resizeMode:'contain'}}
+            />
+          )}
+          size={30}
+        />
+    </TouchableOpacity>
+  )
 
   const renderItem = ({ item }) => {
     let color_mode = 2;

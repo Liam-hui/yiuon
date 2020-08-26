@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { Image, StyleSheet, View, } from 'react-native';
 import Lightbox from '@/components/Lightbox';

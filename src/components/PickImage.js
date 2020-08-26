@@ -24,10 +24,11 @@ export const PickImage = async (func,cancel_func,the_type) => {
         });
         if (!result.cancelled) {
             func(result.uri);
+            console.log(result);
         }
         else {
-          cancel_func();
-          console.log('cancle');
+          if(cancel_func)cancel_func();
+          // console.log('cancel');
         }
 
         console.log(result);

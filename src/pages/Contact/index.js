@@ -1,24 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { ImageBackground, SafeAreaView, Image, View, StyleSheet, Text, TouchableOpacity } from "react-native";
+import React from 'react';
+import { ImageBackground, SafeAreaView, Image, View, StyleSheet, Text, ScrollView, Dimensions } from "react-native";
 import { IconButton } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import MaterialCommunityIcon from 'react-native-vector-icons/MaterialCommunityIcons'
 
 function ContactScreen() {
-  // const [message, setMessage] = useState('');
-
-  // useEffect(() => {
-  //   setMessage('Contact page!');
-  // }, []);
 
   return (
 
     <SafeAreaView style={styles.container}>
       <ImageBackground
-        style={{width: '100%', height: '100%'}}
+        style={{width:'100%', height: '100%'}}
         resizeMode='cover' 
         source={require('@/img/background-6.png')}
       >
+        <ScrollView>
+        <Image 
+          source={require('@/img/yiuon_map.jpg')}
+          style={{width:'100%',height:Dimensions.get('window').width/1024*582}}
+          resizeMode="contain"
+        />
+
         <View style={styles.sectionMid}>
           <View style={styles.line}>
             <Text style={styles.content} >沙田馬鞍山耀安邨耀頌樓地下</Text>
@@ -76,6 +78,8 @@ function ContactScreen() {
           </View>
         </View>
 
+        </ScrollView>
+
       </ImageBackground>
     </SafeAreaView>
   );
@@ -104,7 +108,7 @@ const styles = StyleSheet.create({
   line: {
     flex:0,
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'center',
     marginVertical: 6,
   },
   title: {

@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { FlatList, Image, SafeAreaView, View, ImageBackground, StyleSheet, Text, TouchableOpacity } from "react-native";
+import {Image, ScrollView, View, ImageBackground, StyleSheet, Text, Dimensions } from "react-native";
 
 function NewsDetail({route, navigation}) {
 
   const {item} = route.params;
+  const [ratio, setRatio] = useState(0);
+
+  Image.getSize(item.pic, (w, h) => { 
+    setRatio(w/h);
+ });
 
   return (
      <ImageBackground
@@ -11,36 +16,24 @@ function NewsDetail({route, navigation}) {
         resizeMode='cover' 
         source={require('@/img/background-6.png')}
       >
-      <SafeAreaView style={styles.container}>
+      <ScrollView>
         <Image 
-                    source={require('@/img/icon_like-2.png')}
-                    style={styles.photo}
-                    resizeMode="cover"
+                    source={{ uri: item.pic }}
+                    style={{width:'100%', height: Dimensions.get('window').width * ratio}}
+                    resizeMode="contain"
         />
         <View style={styles.content}>
-          <View style={styles.line}>
-            <Text style={styles.title}>{item.title}</Text> 
-            <Text style={styles.date}>{item.date}</Text>
-          </View>
-          <Text style={styles.text}>{item.detail}</Text>
+          <Text style={styles.title}>{item.title}</Text> 
+          <Text style={styles.text}>{item.description}</Text>
         </View>
 
-      </SafeAreaView>
+      </ScrollView>
     </ImageBackground>
 
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  photo: {
-    width:'100%',
-    height: 150,
-    backgroundColor: 'red',
-  },
   content: {
     width: '100%',
     paddingHorizontal: 20,
@@ -49,6 +42,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     color: '#994278',
+    marginBottom: 20,
   },
   text: {
     fontSize: 18,
@@ -58,7 +52,6 @@ const styles = StyleSheet.create({
     width: '100%',
     flex:0,
     flexDirection: 'row',
-    // alignItems: 'baseline',
   },
   date: {
     position: 'absolute',

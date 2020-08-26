@@ -5,22 +5,49 @@ import FormInput from '@/components/FormInput';
 import FormButton from '@/components/FormButton';
 import {PickImage} from '@/components/PickImage';
 import DatePicker from 'react-native-datepicker'
+import { Services } from '@/services/';
 
 const screenWidth = Math.round(Dimensions.get('window').width);
 
-export default function AddPhotoScreen({navigation}) {
+export default function AddPhotoScreen({route,navigation}) {
     const [cover, setCover] = useState(null);
     const [smallPhotos, setSmallPhotos] = useState([]);  
     const [name, setName] = useState('');
+    const [date, setDate] = useState( new Date() );
     const [datePicker, setDatePicker] = useState(null);
+
+    const {item} = route.params;
+    const {newAlbum} = route.params;
 
     const getCurrentDate=()=>{
       var date = new Date().getDate();
       var month = new Date().getMonth() + 1;
       var year = new Date().getFullYear();
       return date + '/' + month + '/' + year;
-}
-    const [date, setDate] = useState( getCurrentDate() );
+    }
+
+    useEffect(() => {
+      if (!newAlbum) {
+        setName(item.title);
+        setDate(item.date_for_display);
+      }
+      else setDate( getCurrentDate() );
+
+      navigation.setParams({
+        pop: navigation.goBack,
+      });
+
+    }, []);
+
+
+
+    const handle_submit = () => {
+      if(cover) Services.upload_image_to_album(item.id,cover,(photo_id) => Services.set_album_cover(item.id,photo_id));
+
+      for(let i=0;i<smallPhotos.length;i++){
+        Services.upload_image_to_album(item.id,smallPhotos[i]);
+      }
+    }
 
     const addSmallPhotos = (newPhoto) => {
       setSmallPhotos(smallPhotos.concat(newPhoto));
@@ -77,15 +104,14 @@ export default function AddPhotoScreen({navigation}) {
 
           <Title style={styles.inputText}>相簿名稱</Title>
           <FormInput
-            // labelName=''
-            // value={email}
-            autoCapitalize='none'
+            value={name}
+            editable={newAlbum}
             onChangeText={name => setName(name)}
           />
           <Title style={styles.inputText}>活動日期</Title>
           <TouchableOpacity
+            disabled={!newAlbum}
             onPress={()=> {
-              console.log('pressed');
               datePicker.onPressDate();
             }}
           >
@@ -155,10 +181,11 @@ export default function AddPhotoScreen({navigation}) {
 
         <View style={{width: '80%',marginTop:'auto'}}>
             <FormButton
-                    title='提交'
-                    addStyle={{marginTop:20}}
-                    modeValue='contained'
-                    labelStyle={{fontSize: 20}}
+              title='提交'
+              addStyle={{marginTop:20,marginBottom:40}}
+              modeValue='contained'
+              labelStyle={{fontSize: 20}}
+              onPress={()=>handle_submit()}
             />  
         </View>
         

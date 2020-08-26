@@ -2,8 +2,9 @@ import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import ChatScreen from '@/pages/Chat';
 import Chatroom from '@/pages/Chat/chatroom';
-import AdminChatSettingScreen from '@/pages/Chat/admin-setting'
-import AddMemberScreen from '@/pages/Chat/add-member'
+import AdminChatSettingScreen from '@/pages/Chat/admin-setting';
+import AddMemberScreen from '@/pages/Chat/add-member';
+import CreateSingleChatScreen from '@/pages/Chat/create-single-chat';
 
 const Stack = createStackNavigator();
 
@@ -14,6 +15,9 @@ export default function ChatStack() {
         >
           <Stack.Screen name='main' initialParams={{ title: "留言聊天" }} component={ChatScreen} />
           <Stack.Screen name='chatroom' initialParams={{ title: "活" }} component={Chatroom} />
+          <Stack.Screen name='create-single-chat' initialParams={{ title: "留言聊天" }} component={CreateSingleChatScreen} />
+
+          {/* admin */}
           <Stack.Screen name='admin-setting' initialParams={{ title: "" }} component={AdminChatSettingScreen} />
           <Stack.Screen name='add-member'initialParams={{ title: "" }} component={AddMemberScreen} />
         </Stack.Navigator>

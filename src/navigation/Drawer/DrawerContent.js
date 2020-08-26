@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Image } from 'react-native';
+import { Drawer } from 'react-native-paper';
 import { DrawerItem,DrawerContentScrollView,} from '@react-navigation/drawer';
 import { useIsDrawerOpen } from '@react-navigation/drawer';
 import{ useSelector,useDispatch } from 'react-redux';
 import actions from '@/store/ducks/actions';
+import PopOutOption from '@/components/PopOutOption';
+import { Services } from '@/services/';
 
 export function DrawerContent(props) {
   const isDrawerOpen = useIsDrawerOpen();
@@ -11,13 +14,12 @@ export function DrawerContent(props) {
   if(isDrawerOpen) dispatch(actions.drawer_turnon());
     else dispatch(actions.drawer_turnoff());
 
+  const [logOutPop, setLogOutPop] = useState(false);
+
   return (
-    <DrawerContentScrollView {...props}>
-      <View
-        style={styles.drawerContent}
-      >
-    
-        {/* <Drawer.Section style={styles.drawerSection}> */}
+    // <DrawerContentScrollView {...props}>
+      <View style={styles.drawerContent}>
+        {/* <Drawer.Section style={styles.up}> */}
           <DrawerItem
             icon={() => (
               <Image
@@ -85,33 +87,43 @@ export function DrawerContent(props) {
             onPress={() => props.navigation.navigate('Setting')}
           />
         {/* </Drawer.Section> */}
-        {/* <Drawer.Section title="Preferences">
-          <TouchableRipple onPress={() => {}}>
-            <View style={styles.preference}>
-              <Text>Dark Theme</Text>
-              <View pointerEvents="none">
-                <Switch value={false} />
-              </View>
-            </View>
-          </TouchableRipple>
-          <TouchableRipple onPress={() => {}}>
-            <View style={styles.preference}>
-              <Text>RTL</Text>
-              <View pointerEvents="none">
-                <Switch value={false} />
-              </View>
-            </View>
-          </TouchableRipple>
-        </Drawer.Section> */}
+
+        {/* <Drawer.Section style={styles.bottom}> */}
+          <DrawerItem
+              style={styles.bottom}
+              icon={() => (
+                <Image
+                style={styles.icon}
+                source={require('@/img/icon_logout.png')}
+                />
+              )}
+              label="登出"
+              labelStyle={styles.label}
+              onPress={() => setLogOutPop(true)}
+            />
+            {logOutPop? (
+              <PopOutOption
+              text={'登出？'}
+              butTextTop={'確定'}
+              butTextBot={'返回'}
+              butFuncTop={Services.logOut}
+              butFuncBot={()=>setLogOutPop(false)}
+              />
+            ):(null)
+            }
+            
+        {/* </Drawer.Section> */}
       </View>
-    </DrawerContentScrollView>
+    // </DrawerConten/tScrollView>
   );
 }
 
 
 const styles = StyleSheet.create({
   drawerContent: {
-    flex: 1,
+    // backgroundColor: 'red',
+    marginTop: 10,
+    height: '100%',
   },
   icon: {
     width: 40,
@@ -121,7 +133,12 @@ const styles = StyleSheet.create({
     color: '#A24982',
     fontSize: 20,
   },
-  drawerSection: {
-    marginTop: 15,
+  up: {
+    marginTop: -10,
+  },
+  bottom: {
+    position: 'absolute',
+    bottom: 20,
+    
   },
 });

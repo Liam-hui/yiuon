@@ -32,12 +32,14 @@ const theme = {
   },
 };
 
-export const Header = ({ scene, previous, navigation}) => {
+export const Header = ({ scene, navigation}) => {
   // console.log(scene.descriptor.options);
     const title = scene.descriptor.options.headerTitle;
     const color_mode = scene.descriptor.options.color_mode;
     const right = scene.descriptor.options.right;
     const back = scene.descriptor.options.back;
+    let pop = scene.descriptor.options.pop;
+    if(!pop) pop = navigation.popToTop;
 
     let color_chosen = theme.colors;
 
@@ -69,8 +71,9 @@ export const Header = ({ scene, previous, navigation}) => {
       >
         {back ? (
           <Appbar.BackAction
-          onPress={navigation.popToTop}
+            onPress={pop}
             color={color_chosen.icon}
+            size={20}
           />
         ) : (
           <TouchableOpacity

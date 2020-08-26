@@ -26,23 +26,11 @@ const authReducer = (state = defaultAuthState, action) => {
         ...action.payload,
       };
     }
-    // case LOGOUT_FINISH: {
-    //   return {
-    //     ...state,
-    //     username: null,
-    //     name: null,
-    //     roles: []
-    //   };
-    // }
-    // case INIT_USERDATA: {
-    //   const { username, name, roles } = action.payload;
-    //   return {
-    //     ...state,
-    //     username,
-    //     name,
-    //     roles
-    //   };
-    // }
+    case types.LOGOUT_FINISH: {
+      return {
+        ...defaultAuthState
+      };
+    }
     default: {
       return state;
     }
