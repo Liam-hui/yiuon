@@ -1,12 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ImageBackground} from 'react-native';
+import { View, StyleSheet, ImageBackground, Text} from 'react-native';
 import { Title } from 'react-native-paper';
 import FormInput from '@/components/FormInput';
 import FormButton from '@/components/FormButton';
+import { Services } from '@/services/';
 
 export default function ForgetPasswordScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [number, setNumber] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [warning, setWarning] = useState('');
+
+  const handleSubmit = () => {
+    if (newPassword=='')setWarning('請輸入新密碼');
+        else if (confirmPassword=='')setWarning('請再次輸入新密碼');
+    if(newPassword==confirmPassword) Services.forget_password(number,newPassword,confirmPassword,setWarning) ;
+  }
 
   return (
     <ImageBackground
@@ -18,30 +27,37 @@ export default function ForgetPasswordScreen() {
         <View style={styles.loginWrapper}>
           <Title style={styles.inputText}>登入編號</Title>
           <FormInput
-            // labelName='Email'
-            value={email}
             autoCapitalize='none'
-            onChangeText={userEmail => setEmail(userEmail)}
+            onChangeText={number => setNumber(number)}
           />
           <Title style={styles.inputText}>輸入新密碼</Title>
           <FormInput
-            // labelName='Password'
-            value={password}
             secureTextEntry={true}
-            onChangeText={userPassword => setPassword(userPassword)}
+            onChangeText={userPassword => {setWarning(''),setNewPassword(userPassword)}}
           />
           <Title style={styles.inputText}>再次輸入新密碼</Title>
           <FormInput
-            // labelName='Password'
-            value={password}
             secureTextEntry={true}
-            onChangeText={userPassword => setPassword(userPassword)}
+            onChangeText={userPassword => {setWarning(''),setConfirmPassword(userPassword)}}
           />
+
+          <Text style={styles.warn}>
+            {warning!=''?
+              (warning)
+              :(' ')
+            }
+            {warning=='' && newPassword!='' && confirmPassword!='' && newPassword!=confirmPassword ?
+              ('兩次密碼輸入不一致，請重新輸入')
+              :(' ')
+            }
+          </Text>
+
           <FormButton
             title='提交'
             addStyle={{marginTop:30}}
             modeValue='contained'
             labelStyle={{fontSize: 20}}
+            onPress={() => {handleSubmit()}}
           />
         </View>
       </View>

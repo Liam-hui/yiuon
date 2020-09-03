@@ -4,6 +4,8 @@ import { Title } from 'react-native-paper';
 import FormInput from '@/components/FormInput';
 import FormButton from '@/components/FormButton';
 import { Services } from '@/services/';
+import actions from '@/store/ducks/actions';
+import store from '@/store';
 
 
 export default function LoginScreen({navigation}) {
@@ -14,6 +16,12 @@ export default function LoginScreen({navigation}) {
   const handleLogin = (number,password,setFail) => {
     if(number!=''&&password!='') Services.logIn(number,password,setFail);
   }
+
+  React.useCallback(() => {
+    store.dispatch(actions.invalidTokenAction(false));
+
+    return () => {};
+  }, [])
 
   return (
     <SafeAreaView>

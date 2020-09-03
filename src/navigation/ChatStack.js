@@ -2,9 +2,11 @@ import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import ChatScreen from '@/pages/Chat';
 import Chatroom from '@/pages/Chat/chatroom';
-import AdminChatSettingScreen from '@/pages/Chat/admin-setting';
+import ChatSettingScreen from '@/pages/Chat/chat-setting';
 import AddMemberScreen from '@/pages/Chat/add-member';
-import CreateSingleChatScreen from '@/pages/Chat/create-single-chat';
+import SearchUserListScreen from '@/pages/Chat/search_user_list';
+import AddNewGroupScreen from '@/pages/Chat/add-group';
+
 
 const Stack = createStackNavigator();
 
@@ -15,11 +17,12 @@ export default function ChatStack() {
         >
           <Stack.Screen name='main' initialParams={{ title: "留言聊天" }} component={ChatScreen} />
           <Stack.Screen name='chatroom' initialParams={{ title: "活" }} component={Chatroom} />
-          <Stack.Screen name='create-single-chat' initialParams={{ title: "留言聊天" }} component={CreateSingleChatScreen} />
+          <Stack.Screen name='search_user_list' initialParams={{ title: "留言聊天" }} component={SearchUserListScreen} />
 
           {/* admin */}
-          <Stack.Screen name='admin-setting' initialParams={{ title: "" }} component={AdminChatSettingScreen} />
+          <Stack.Screen name='chat-setting' component={ChatSettingScreen} />
           <Stack.Screen name='add-member'initialParams={{ title: "" }} component={AddMemberScreen} />
+          <Stack.Screen name='add-group'initialParams={{ title: "新增群組" }} component={AddNewGroupScreen} />
         </Stack.Navigator>
     );
   }

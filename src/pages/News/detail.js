@@ -1,35 +1,43 @@
 import React, { useState, useEffect } from 'react';
-import {Image, ScrollView, View, ImageBackground, StyleSheet, Text, Dimensions } from "react-native";
+import {Image, ScrollView, View, ImageBackground, StyleSheet, Text, Dimensions, SafeAreaView } from "react-native";
+import { useFocusEffect } from '@react-navigation/native';
 
 function NewsDetail({route, navigation}) {
 
   const {item} = route.params;
   const [ratio, setRatio] = useState(0);
 
-  Image.getSize(item.pic, (w, h) => { 
-    setRatio(w/h);
- });
+  useFocusEffect(
+    React.useCallback(() => {
+      Image.getSize(item.pic, (w, h) => { 
+        setRatio(w/h);
+      });
+
+      return () => {};
+    }, [])
+  );
 
   return (
-     <ImageBackground
+    <SafeAreaView>
+      <ImageBackground
         style={{width: '100%', height: '100%'}}
         resizeMode='cover' 
         source={require('@/img/background-6.png')}
       >
-      <ScrollView>
-        <Image 
-                    source={{ uri: item.pic }}
-                    style={{width:'100%', height: Dimensions.get('window').width * ratio}}
-                    resizeMode="contain"
-        />
-        <View style={styles.content}>
-          <Text style={styles.title}>{item.title}</Text> 
-          <Text style={styles.text}>{item.description}</Text>
-        </View>
+        <ScrollView>
+          <Image 
+              source={{ uri: item.pic }}
+              style={{width:'100%', height: Dimensions.get('window').width * ratio}}
+              resizeMode="contain"
+          />
+          <View style={styles.content}>
+            <Text style={styles.title}>{item.title}</Text> 
+            <Text style={styles.text}>{item.description}</Text>
+          </View>
 
-      </ScrollView>
-    </ImageBackground>
-
+        </ScrollView>
+      </ImageBackground>
+    </SafeAreaView>
   );
 };
 

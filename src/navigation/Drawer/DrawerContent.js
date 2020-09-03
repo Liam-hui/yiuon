@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Image } from 'react-native';
+import { View, StyleSheet, Image,Text,TouchableOpacity} from 'react-native';
 import { Drawer } from 'react-native-paper';
-import { DrawerItem,DrawerContentScrollView,} from '@react-navigation/drawer';
-import { useIsDrawerOpen } from '@react-navigation/drawer';
+import { DrawerItem,DrawerContentScrollView,useIsDrawerOpen } from '@react-navigation/drawer';
 import{ useSelector,useDispatch } from 'react-redux';
 import actions from '@/store/ducks/actions';
 import PopOutOption from '@/components/PopOutOption';
@@ -20,87 +19,104 @@ export function DrawerContent(props) {
     // <DrawerContentScrollView {...props}>
       <View style={styles.drawerContent}>
         {/* <Drawer.Section style={styles.up}> */}
-          <DrawerItem
-            icon={() => (
-              <Image
+
+          <TouchableOpacity style={styles.item} onPress={() => props.navigation.navigate('Chat')} >
+            <Image
               style={styles.icon}
               source={require('@/img/icon_communication.png')}
+            />
+            <Text style={styles.label}>留言聊天</Text>
+            <Image
+                style={styles.arrow}
+                source={require('@/img/Btn_action-1.png')}
+                resizeMode="contain"
               />
-            )}
-            label="留言聊天"
-            labelStyle={styles.label}
-            onPress={() => props.navigation.navigate('Chat')}
-          />
-          <DrawerItem
-            icon={() => (
-              <Image
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.item} onPress={() => props.navigation.navigate('Album')} >
+            <Image
               style={styles.icon}
               source={require('@/img/icon_album.png')}
+            />
+            <Text style={styles.label}>活動相簿</Text>
+            <Image
+                style={styles.arrow}
+                source={require('@/img/Btn_action-1.png')}
+                resizeMode="contain"
               />
-            )}
-            label="活動相簿"
-            labelStyle={styles.label}
-            onPress={() => props.navigation.navigate('Album')}
-          />
-          <DrawerItem
-            icon={() => (
-              <Image
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.item} onPress={() => props.navigation.navigate('News')} >
+            <Image
               style={styles.icon}
               source={require('@/img/icon_news.png')}
+            />
+            <Text style={styles.label}>中心消息</Text>
+            <Image
+                style={styles.arrow}
+                source={require('@/img/Btn_action-1.png')}
+                resizeMode="contain"
               />
-            )}
-            label="中心消息"
-            labelStyle={styles.label}
-            onPress={() => props.navigation.navigate('News')}
-          />
-          <DrawerItem
-            icon={() => (
-              <Image
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.item} onPress={() => props.navigation.navigate('Info')} >
+            <Image
               style={styles.icon}
               source={require('@/img/icon_event.png')}
+            />
+            <Text style={styles.label}>活動資訊</Text>
+            <Image
+                style={styles.arrow}
+                source={require('@/img/Btn_action-1.png')}
+                resizeMode="contain"
               />
-            )}
-            label="活動資訊"
-            labelStyle={styles.label}
-            onPress={() => props.navigation.navigate('Info')}
-          />
-          <DrawerItem
-            icon={() => (
-              <Image
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.item} onPress={() => props.navigation.navigate('Contact')} >
+            <Image
               style={styles.icon}
               source={require('@/img/icon_contact.png')}
-              />
-            )}
-            label="聯絡我們"
-            labelStyle={styles.label}
-            onPress={() => props.navigation.navigate('Contact')}
-          />
-          <DrawerItem
-           icon={() => (
-            <Image
-            style={styles.icon}
-            source={require('@/img/icon_setting.png')}
             />
-          )}
-            label="會員設定"
-            labelStyle={styles.label}
-            onPress={() => props.navigation.navigate('Setting')}
-          />
+            <Text style={styles.label}>聯絡我們</Text>
+            <Image
+                style={styles.arrow}
+                source={require('@/img/Btn_action-1.png')}
+                resizeMode="contain"
+              />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.item} onPress={() => props.navigation.navigate('Setting')} >
+            <Image
+              style={styles.icon}
+              source={require('@/img/icon_setting.png')}
+            />
+            <Text style={styles.label}>會員設定</Text>
+            <Image
+                style={styles.arrow}
+                source={require('@/img/Btn_action-1.png')}
+                resizeMode="contain"
+              />
+          </TouchableOpacity>
+            
+          
         {/* </Drawer.Section> */}
 
         {/* <Drawer.Section style={styles.bottom}> */}
-          <DrawerItem
-              style={styles.bottom}
-              icon={() => (
-                <Image
-                style={styles.icon}
-                source={require('@/img/icon_logout.png')}
-                />
-              )}
-              label="登出"
-              labelStyle={styles.label}
-              onPress={() => setLogOutPop(true)}
+        <View style={styles.bottom}>
+          <TouchableOpacity style={styles.item} onPress={() => setLogOutPop(true)} >
+            <Image
+              style={styles.icon}
+              source={require('@/img/icon_logout.png')}
             />
+            <Text style={styles.label}>登出</Text>
+            <Image
+                style={styles.arrow}
+                source={require('@/img/Btn_action-1.png')}
+                resizeMode="contain"
+              />
+          </TouchableOpacity>
+        </View>
+
             {logOutPop? (
               <PopOutOption
               text={'登出？'}
@@ -125,13 +141,31 @@ const styles = StyleSheet.create({
     marginTop: 10,
     height: '100%',
   },
+  item:{
+    // flex:1,
+    width:'100%',
+    height:50,
+    flexDirection:'row',
+    alignItems:'center',
+    marginVertical:5,
+    // backgroundColor:'red',
+  },
   icon: {
+    marginLeft:20,
+    marginRight:40,
     width: 40,
     height: 40,
   },
   label:{
     color: '#A24982',
     fontSize: 20,
+    fontWeight: 'bold',
+  },
+  arrow:{
+    height:18,
+    width:20,
+    marginLeft:'auto',
+    marginRight:10,
   },
   up: {
     marginTop: -10,

@@ -1,62 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { FlatList, Image, SafeAreaView, View, ImageBackground, StyleSheet, Text, TouchableOpacity,TouchableWithoutFeedback,AsyncStorage } from "react-native";
 import { Services } from '@/services/';
-
-const DATA = [
-  {
-    id: "1",
-    title: "活動名稱",
-    start_date: "2007-08-13T10:42:16.061Z",
-    date_for_display: "23-27/10/07",
-    time: "12:00-16:00",
-    // liked: true,
-    detail: "活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容",
-  },
-  {
-    id: "2",
-    title: "活動名稱活動名稱活動名稱活動名稱",
-    start_date: "2020-08-13T10:42:16.061Z",
-    date_for_display: "23-27/10/20",
-    time: "12:00-16:00",
-    // liked: true,
-    detail: "活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容",
-  },
-  {
-    id: "3",
-    title: "活動名稱",
-    start_date: "2040-08-13T10:42:16.061Z",
-    date_for_display: "23-27/10/40",
-    time: "12:00-16:00",
-    detail: "活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容",
-  },
-  {
-    id: "4",
-    title: "活動名稱",
-    start_date: "2000-08-13T10:42:16.061Z",
-    date_for_display: "23-27/10/00",
-    time: "12:00-16:00",
-    detail: "活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容",
-  },
-  {
-    id: "5",
-    title: "活動名稱",
-    start_date: "2019-08-13T10:42:16.061Z",
-    date_for_display: "23-27/10/19",
-    time: "12:00-16:00",
-    detail: "活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容活動內容",
-  },
-];
+import { useFocusEffect } from '@react-navigation/native';
 
 function InfoScreen({navigation}) {
   const [data,setData] = useState([]);
   const [end, setEnd] = useState(false);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(2);
   const [update,setUpdate] = useState(0);
   const [fav,setFav] = useState('');
 
-  useEffect(() => {
-    Services.get('events?page=1'+fav,addToData);
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      Services.get('events?page=1'+fav,(data) => setData(data.data) );
+      setPage(2);
+      setEnd(false);
+
+      return () => {};
+    }, [])
+  );
 
   const addToData = (newData) => {
     if(newData.data.length>0) {
@@ -65,16 +27,6 @@ function InfoScreen({navigation}) {
       console.log(newData);
     }
       else setEnd(true);
-  }
-
-  const handleScroll = (event) => {
-    if(!end && (event.nativeEvent.contentSize.height - event.nativeEvent.layoutMeasurement.height - event.nativeEvent.contentOffset.y) < 10 ) {
-      Services.get('events?page='+page+fav,addToData);
-    };
-  }
-
-  const reset_data = (data) => {
-    setData(data.data);
   }
 
   const change_like = (index) => {
@@ -89,11 +41,11 @@ function InfoScreen({navigation}) {
     if(item.is_fav) like_url = require("@/img/icon_like-2.png");
     return(
       <TouchableOpacity 
-        onPress={() => navigation.navigate('detail',  {item: item})} 
+        onPress={() => navigation.navigate('detail',  {item: item}) } 
         style={[styles.item]}
       >
         <Image 
-          source={require('@/img/photo_test.jpg')}
+          source={{ uri: item.pic }}
           style={styles.image}
         />
         <View style={styles.content}>
@@ -122,19 +74,21 @@ function InfoScreen({navigation}) {
   )};
 
   return (
-     <ImageBackground
+    <SafeAreaView>
+      <ImageBackground
         style={{width: '100%', height: '100%'}}
         resizeMode='cover' 
         source={require('@/img/background-6.png')}
       >
-      <SafeAreaView style={styles.container}> 
+      <View style={styles.container}> 
         
       <TouchableOpacity 
         style={styles.button}
         onPress={() => {
           setFav('&favFirst=y');
-          setPage(1);
-          Services.get('events?page=1&favFirst=y',reset_data);
+          Services.get('events?page=1&favFirst=y',(data) => setData(data.data) );
+          setPage(2);
+          setEnd(false);
         }}
       >
         <Text style={styles.buttonText}>以</Text>
@@ -147,15 +101,18 @@ function InfoScreen({navigation}) {
       </TouchableOpacity>         
         
         <FlatList
-          onScroll={event=> {handleScroll(event)}}
+          onEndReached={(e) => {
+            if(!end) Services.get('events?page='+page+fav,addToData);
+          }}
           data={data}
           renderItem={renderItem}
           extraData={update}
           style={{width:'100%'}}
         />
 
-      </SafeAreaView>
-    </ImageBackground>
+      </View>
+      </ImageBackground>
+    </SafeAreaView>
 
   );
 };

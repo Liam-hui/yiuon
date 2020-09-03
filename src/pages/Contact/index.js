@@ -8,78 +8,80 @@ function ContactScreen() {
 
   return (
 
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView>
       <ImageBackground
         style={{width:'100%', height: '100%'}}
         resizeMode='cover' 
         source={require('@/img/background-6.png')}
       >
-        <ScrollView>
-        <Image 
-          source={require('@/img/yiuon_map.jpg')}
-          style={{width:'100%',height:Dimensions.get('window').width/1024*582}}
-          resizeMode="contain"
-        />
+        <View style={styles.container}>
+          <ScrollView>
+            
+            <Image 
+              source={require('@/img/yiuon_map.jpg')}
+              style={{width:'100%',height:Dimensions.get('window').width/1024*582}}
+              resizeMode="contain"
+            />
 
-        <View style={styles.sectionMid}>
-          <View style={styles.line}>
-            <Text style={styles.content} >沙田馬鞍山耀安邨耀頌樓地下</Text>
-          </View>
-          <View style={styles.line}>
-            <Text style={styles.title} >星期一至五   </Text>
-            <Text style={styles.content} >上午八時三十分至下午五時</Text>
-          </View>
-          <View style={styles.line}>
-            <Text style={styles.title} >星期六   </Text>
-            <Text style={styles.content} >上午八時三十分至下午二時</Text>
-          </View>
-          <View style={styles.line}>
-            <Text style={styles.title} >星期日及公眾假期   </Text>
-            <Text style={styles.content} >       休息</Text>
-          </View>
+            <View style={styles.sectionMid}>
+              <View style={styles.line}>
+                <Text style={styles.content} >沙田馬鞍山耀安邨耀頌樓地下</Text>
+              </View>
+              <View style={styles.line}>
+                <Text style={styles.title} >星期一至五   </Text>
+                <Text style={styles.content} >上午八時三十分至下午五時</Text>
+              </View>
+              <View style={styles.line}>
+                <Text style={styles.title} >星期六   </Text>
+                <Text style={styles.content} >上午八時三十分至下午二時</Text>
+              </View>
+              <View style={styles.line}>
+                <Text style={styles.title} >星期日及公眾假期   </Text>
+                <Text style={styles.content} >       休息</Text>
+              </View>
+            </View>
+
+            <View style={styles.sectionBottom}>
+              <View style={styles.line}>
+                <Image 
+                      source={require('@/img/contact_phone.png')}
+                      style={styles.icon}
+                      resizeMode="contain"
+                />
+                <Text style={styles.title} >電話     : </Text>
+                <Text style={styles.content} >2641-7787</Text>
+              </View>
+              <View style={styles.line}>
+                <Image 
+                      source={require('@/img/contact_fax.png')}
+                      style={styles.icon}
+                      resizeMode="contain"
+                />
+                <Text style={styles.title} >傳真     : </Text>
+                <Text style={styles.content} >2641-4634</Text>
+              </View>
+              <View style={styles.line}>
+                <Image 
+                      source={require('@/img/contact_mail.png')}
+                      style={styles.icon}
+                      resizeMode="contain"
+                />
+                <Text style={styles.title} >電郵     : </Text>
+                <Text style={styles.content} >info@yiuonec.org.hk</Text>
+              </View>
+              <View style={styles.line}>
+                <Image 
+                      source={require('@/img/contact_web.png')}
+                      style={styles.icon}
+                      resizeMode="contain"
+                />
+                <Text style={styles.title} >網址     : </Text>
+                <Text style={styles.content} >www.yiuonec.org.hk</Text>
+              </View>
+            </View>
+
+          </ScrollView>
         </View>
-
-        <View style={styles.sectionBottom}>
-          <View style={styles.line}>
-            <Image 
-                  source={require('@/img/contact_phone.png')}
-                  style={styles.icon}
-                  resizeMode="contain"
-            />
-            <Text style={styles.title} >電話     : </Text>
-            <Text style={styles.content} >2641-7787</Text>
-          </View>
-          <View style={styles.line}>
-            <Image 
-                  source={require('@/img/contact_fax.png')}
-                  style={styles.icon}
-                  resizeMode="contain"
-            />
-            <Text style={styles.title} >傳真     : </Text>
-            <Text style={styles.content} >2641-4634</Text>
-          </View>
-          <View style={styles.line}>
-            <Image 
-                  source={require('@/img/contact_mail.png')}
-                  style={styles.icon}
-                  resizeMode="contain"
-            />
-            <Text style={styles.title} >電郵     : </Text>
-            <Text style={styles.content} >info@yiuonec.org.hk</Text>
-          </View>
-          <View style={styles.line}>
-            <Image 
-                  source={require('@/img/contact_web.png')}
-                  style={styles.icon}
-                  resizeMode="contain"
-            />
-            <Text style={styles.title} >網址     : </Text>
-            <Text style={styles.content} >www.yiuonec.org.hk</Text>
-          </View>
-        </View>
-
-        </ScrollView>
-
       </ImageBackground>
     </SafeAreaView>
   );

@@ -7,7 +7,6 @@ import{useSelector,useDispatch} from 'react-redux';
 import { Services } from '@/services/';
 
 export default function Password() {
-  const [email, setEmail] = useState('');
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

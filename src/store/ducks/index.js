@@ -1,6 +1,5 @@
 import { combineReducers,createStore } from 'redux';
 import types from "./types";
-import actions from "./actions";
 
 
 const drawerReducer = ( state = false, action ) => {
@@ -13,9 +12,17 @@ const drawerReducer = ( state = false, action ) => {
   }
 }
 
+const invalidTokenReducer = ( state = false, action ) => {
+  switch( action.type ) {
+      case types.INVALID_TOKEN:
+        return action.payload
+      default: return state;
+  }
+}
+
 const defaultAuthState = {
   loggedIn:false,
-  type: '',
+  userType: '',
   userData: []
 };
 
@@ -40,6 +47,7 @@ const authReducer = (state = defaultAuthState, action) => {
 const reducers = combineReducers({
   drawer_on: drawerReducer,
   auth_state: authReducer,
+  invalidToken: invalidTokenReducer,
 });
 
 const store = createStore(

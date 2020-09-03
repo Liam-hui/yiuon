@@ -1,55 +1,15 @@
 import React, {useState, useEffect } from 'react';
 import { Text, View, StyleSheet,ImageBackground,TouchableOpacity,Image,SafeAreaView,FlatList} from 'react-native';
 import { Avatar,IconButton } from 'react-native-paper';
-
-const DATA = [
-  {
-    id: "1",
-    title: "唱遊小組1",
-    type: "group",
-    online: true,
-    newMsg: 5,
-  },
-  {
-    id: "2",
-    title: "唱遊小組2",
-    type: "group",
-    online: false,
-    newMsg: 5,
-  },
-  {
-    id: "3",
-    title: "唱遊小組3",
-    type: "single",
-    online: true,
-    newMsg: 0,  
-  },
-];
-
-const Item = ({ item, onPress, style }) => {
-  let bg_color = '#cbcbcb';
-  let text_color = '#606060';
-  if(item.online) {
-    if(item.type=='group') {
-      bg_color = '#a7589c';
-      text_color = '#FFFFFF';
-    }
-    else {
-      bg_color = '#FFFFFF';
-      text_color = '#a7589c';
-    }
-  }
-  return (
-    <TouchableOpacity onPress={onPress} style={[styles.item,{backgroundColor: bg_color}]}>
-      <Avatar.Image size={35} source={require('@/img/avatar.jpg')} />
-      <Text style={[styles.title,{color: text_color}]}>{item.title}</Text>
-      {!item.online ? <Text style={styles.status}>離線中</Text> : null }
-      { item.online && item.newMsg>0 ? <View style={styles.number}><Text style={{fontSize: 20}}>{item.newMsg}</Text></View> : null }
-    </TouchableOpacity>
-)};
+import { Services } from '@/services/';
+import { useFocusEffect } from '@react-navigation/native';
+import{ useSelector,useDispatch } from 'react-redux';
+import { AsyncStorage } from 'react-native';
 
 function ChatScreen({navigation}) {
-  const [selectedId, setSelectedId] = useState(null);
+  const userData = useSelector(state => state.auth_state.userData);
+  const [data,setData] = useState([]);
+  const [update,setUpdate] = useState(0);
 
   useEffect(() => {
     navigation.setParams({
@@ -58,9 +18,35 @@ function ChatScreen({navigation}) {
     });
   }, []);
 
+  useEffect(() => {
+    if(data.length>0){
+      let data_ = data;
+      data_.sort(function (a, b) {
+        return (b.message_id) - (a.message_id);
+      });
+      setData(data_);
+      AsyncStorage.setItem('room', JSON.stringify(data_));
+      setUpdate(update+1);
+    }
+  }, [data]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      Services.get('chat/getRooms',setData,get_data_from_storage);
+
+      return () => {};
+    }, [])
+  );
+  
+  const get_data_from_storage = async() => {
+    const data_stored = await AsyncStorage.getItem('room');
+    if(data_stored) setData(JSON.parse(data_stored));
+  } 
+
   const renderHeaderRight = () => (
     <TouchableOpacity
-      onPress={() => {navigation.navigate('create-single-chat')} }
+      // onPress={() => {navigation.push('search_user_list')} }
+      onPress={() => {console.log(data) }}
     >
        <IconButton
           icon={({ size}) => (
@@ -74,37 +60,61 @@ function ChatScreen({navigation}) {
     </TouchableOpacity>
   )
 
-  const renderItem = ({ item }) => {
-    let color_mode = 2;
-    if(item.type=='single') color_mode = 3;
-    return (
-      <Item
-        item={item}
-        onPress={() => navigation.navigate('chatroom',  {title:item.title, color_mode:color_mode, item: item})}
-        // onPress={() => setSelectedId(item.id)}
-      />
+  const renderItem = ({item}) => {
+    let pic,title,bg,textColor,status; 
+    let other = 0; 
+
+    if(item.isPrivate){
+      if (item.users.length>1 && item.users[other].id == userData.id) other = 1;
+      pic = item.users[other].pic;
+      title = item.users[other].name;
+
+      if(item.users[other].online_status=='online' ){
+        bg = 'white'; 
+        textColor='#a7589c';
+        status='';
+      }
+      else{
+        bg = '#cbcbcb';
+        textColor='#606060';
+        status='離線中';
+      }
+    }
+    else {
+      pic = item.pic;
+      title = item.title;
+      bg = '#a7589c';
+      textColor='#FFFFFF';
+      status='';
+    }
+
+    return(
+      <TouchableOpacity onPress={()=>{navigation.push('chatroom',  {group:item})}} style={[styles.item,{backgroundColor: bg}]}>
+        <Avatar.Image size={40} style={{backgroundColor:'rgba(0,0,0,0.1)'}} source={{ uri: pic }} />
+        <Text style={[styles.title,{color: textColor}]}>{title}</Text>
+        {status!=''? <Text style={[styles.status,{color: textColor}]}>{status}</Text> : null }
+        {status=='' && item.unread>0 ? <View style={styles.number}><Text style={{fontSize: 20}}>{item.unread}</Text></View> : null }
+      </TouchableOpacity>
     );
   };
 
   return (
-    <ImageBackground
-        style={{width: '100%', height: '100%'}}
-        resizeMode='cover' 
-        source={require('@/img/background-6.png')}
-    >
-      <SafeAreaView style={styles.container}>
-        
-        <FlatList
-          data={DATA}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          extraData={selectedId}
-          // style={{width: '90%'}}
-        />
-
-
-      </SafeAreaView>
-    </ImageBackground>
+    <SafeAreaView>
+      <ImageBackground
+          style={{width: '100%', height: '100%'}}
+          resizeMode='cover' 
+          source={require('@/img/background-6.png')}
+      >
+        <View style={styles.container}> 
+          <FlatList
+            data={data}
+            renderItem={renderItem}
+            // keyExtractor={(item) => item.id}
+            extraData={update}
+          />
+        </View>
+      </ImageBackground>
+    </SafeAreaView>
 
   );
 };
@@ -125,7 +135,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginBottom: 8,
     borderRadius: 10,
-    // marginHorizontal: 16,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.16,
+    shadowRadius: 2.88,
+    elevation: 6,
   },
   title: {
     marginLeft: 12,
@@ -134,7 +151,6 @@ const styles = StyleSheet.create({
   status: {
     marginLeft: 'auto',
     fontSize: 20,
-    color: '#606060',
   },
   number: {
     marginLeft: 'auto',

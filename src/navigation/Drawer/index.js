@@ -19,7 +19,7 @@ const Drawer = createDrawerNavigator();
 export const DrawerNavigator = (navigation) => {
   return (
     <Drawer.Navigator initialRouteName='FrontPage'  drawerContent={(props) => <DrawerContent {...props} />}>
-        <Drawer.Screen name="FrontPage" component={FrontPageScreen} /> 
+        <Drawer.Screen name="FrontPage" options={{ gestureEnabled:false }} component={FrontPageScreen} /> 
         <Drawer.Screen name="Chat" initialParams={{ title: "留言聊天" }}  component={ChatStack} />
         <Drawer.Screen name="Album" initialParams={{ title: "活動相簿" }} component={AlbumStack} />
         <Drawer.Screen name="News" initialParams={{ title: "中心消息" }} component={NewsStack} />

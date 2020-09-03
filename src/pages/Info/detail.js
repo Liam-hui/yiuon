@@ -1,45 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import {Image, SafeAreaView, View, ImageBackground, StyleSheet, Text, TouchableOpacity,TouchableWithoutFeedback } from "react-native";
-
-const DATA = [
-  {
-    id: "1",
-    title: "活動名稱",
-    date: "23-27/10/16",
-    time: "12:00-16:00"
-  },
-  {
-    id: "2",
-    title: "活動名稱活動名稱活動名稱活動名稱",
-    date: "23-27/10/16",
-    time: "12:00-16:00" 
-  },
-  {
-    id: "3",
-    title: "活動名稱",
-    date: "23-27/10/16",
-    time: "12:00-16:00"  
-  },
-  {
-    id: "4",
-    title: "活動名稱",
-    date: "23-27/10/16",
-    time: "12:00-16:00"  
-  },
-  {
-    id: "5",
-    title: "活動名稱",
-    date: "23-27/10/16",
-    time: "12:00-16:00"  
-  },
-];
+import {Image, SafeAreaView, View, ImageBackground, StyleSheet, Text, Dimensions, TouchableOpacity,TouchableWithoutFeedback } from "react-native";
+import { Services } from '@/services/';
+import { useFocusEffect } from '@react-navigation/native';
 
 function InfoDetail({route, navigation}) {
-  const {item,like_pass,change_like} = route.params;
-  const [like, setLike] = useState(like_pass);
-  console.log(like);
+  const {item,change_like} = route.params;
+  const [fav,setFav] = useState(item.is_fav);
+  const [ratio, setRatio] = useState(0);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      Image.getSize(item.pic, (w, h) => { 
+        setRatio(w/h);
+      });
+
+      return () => {};
+    }, [])
+  );
+
   let like_url = require("@/img/icon_like-3.png") ;
-  if(like) like_url = require("@/img/icon_like-2.png");
+  if(fav) like_url = require("@/img/icon_like-2.png");
 
   return (
      <ImageBackground
@@ -49,9 +29,9 @@ function InfoDetail({route, navigation}) {
       >
       <SafeAreaView style={styles.container}>
         <Image 
-                    source={require('@/img/icon_like-2.png')}
-                    style={styles.photo}
-                    resizeMode="cover"
+            source={{ uri: item.pic }}
+            style={{width:'100%', height: Dimensions.get('window').width * ratio}}
+            resizeMode="contain"
         />
         <View style={styles.content}>
           <View style={styles.line}>
@@ -59,8 +39,8 @@ function InfoDetail({route, navigation}) {
           <TouchableWithoutFeedback
             style={styles.icon}
             onPress={() => {
-              change_like(item,like);
-              setLike(!like);
+              Services.fav_toggle(item.id);
+              setFav(!fav);
             }}
            >
             <Image 
@@ -85,11 +65,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-  },
-  photo: {
-    width:'100%',
-    height: 150,
-    backgroundColor: 'red',
   },
   content: {
     width: '100%',

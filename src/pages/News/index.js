@@ -1,15 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { View,Image ,FlatList, SafeAreaView, ImageBackground, StyleSheet, Text, TouchableOpacity, ScrollView} from "react-native";
 import { Services } from '@/services/';
+import { useFocusEffect } from '@react-navigation/native';
 
 function NewsScreen({navigation}) {
   const [data, setData] = useState([]);
   const [end, setEnd] = useState(false);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(2);
 
-  useEffect(() => {
-    Services.get('news?page=1',addToData);
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      Services.get('news?page=1',(data) => setData(data.data));
+      setPage(2);
+      setEnd(false);
+
+      return () => {};
+    }, [])
+  );
 
   const addToData = (newData) => {
     if(newData.data.length>0) {
@@ -17,13 +24,6 @@ function NewsScreen({navigation}) {
       setPage(page+1);
     }
       else setEnd(true);
-  }
-
-  const handleScroll = (event) => {
-    if(!end && (event.nativeEvent.contentSize.height - event.nativeEvent.layoutMeasurement.height - event.nativeEvent.contentOffset.y) < 10 ) {
-      // alert('news?page='+(page));
-      Services.get('news?page='+(page),addToData);
-    };
   }
 
   const renderItem = ({item}) => {
@@ -50,21 +50,23 @@ function NewsScreen({navigation}) {
   };
 
   return (
-
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView>
       <ImageBackground
         style={{width: '100%', height: '100%'}}
         resizeMode='cover' 
         source={require('@/img/background-6.png')}
       >
-        <ScrollView onScroll={event=> {handleScroll(event);}}>
-          <FlatList
-            data={data}
-            renderItem={renderItem}
-            keyExtractor={(item) => item.id}
-            // extraData={}
-          />
-        </ScrollView>
+        <View style={styles.container}>
+            <FlatList
+              onEndReached={(e) => {
+                if(!end) Services.get('news?page='+(page),addToData);
+              }}
+              data={data}
+              renderItem={renderItem}
+              keyExtractor={(item) => item.id}
+              // extraData={}
+            />
+        </View>
 
       </ImageBackground>
     </SafeAreaView>

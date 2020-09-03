@@ -3,7 +3,7 @@ import { Text, View, StyleSheet,ImageBackground,TouchableOpacity,TouchableHighli
 import { GiftedChat,Bubble,Send,Composer,InputToolbar} from 'react-native-gifted-chat';
 import { PickImage } from '@/components/PickImage';
 import { Avatar,IconButton } from 'react-native-paper';
-import {Video} from 'expo-av';
+import Gallery from 'react-native-image-gallery';
 import Record from '@/pages/Chat/recordAudio'
 import MessageAudio from '@/pages/Chat/messageAudio';
 import MessageVideo from '@/pages/Chat/messageVideo';
@@ -16,19 +16,22 @@ import{useSelector,useDispatch} from 'react-redux';
 export default function Chatroom({navigation,route}) {
     const userData = useSelector(state => state.auth_state.userData);
 
-    const {group} = route.params;
-    let group_pic,group_title,other;
+    const {group,other} = route.params;
+    let group_pic, group_title;
+    
 
     const [messages, setMessages] = useState([]);
     const [end, setEnd] = useState(false);
     const [text, setText] = useState('');
 
+    //show extra component
     const [showUpload, setShowUpload] = useState(false);
     const [showAudio, setShowAudio] = useState(false);
-    const [showFileChosen, setShowFileChosen] = useState(false);
+    const [showimagesChosen, setShowimagesChosen] = useState(false);
 
-    const [imageUrl, setImageUrl] = useState('');
-    const [videoUrl, setVideoUrl] = useState('');
+    const [imagesChosen, setImagesChosen] = useState([]);
+    const [imageUrl, setImageUrl] = useState([]);
+
     const [audioUrl, setAudioUrl] = useState('');
 
     const [onSend, setOnSend] = useState(null);
@@ -39,8 +42,6 @@ export default function Chatroom({navigation,route}) {
     useFocusEffect(
         React.useCallback(() => {
             if(group.isPrivate==1) {
-                other=0;
-                if (group.users.length>1 && group.users[other].id == userData.id) other = 1;
                 group_pic = group.users[other].pic;
                 group_title = group.users[other].name;
             }
@@ -48,106 +49,127 @@ export default function Chatroom({navigation,route}) {
                 group_pic = group.pic;
                 group_title = group.title;
             }
-            if(group_title=='')group_title=' ';
+
             navigation.setParams({
                 title:group_title,
                 right: renderHeaderRight,
             });
-
-            async function set_table() {
-                try {
-                  await chatDatabase.setupDatabaseAsync();
-                } catch (e) {
-                  console.warn(e);
-                }
-            }
-
-            set_table();
-            reset_messages();
+            loadChats();
         return () => {};
     }, [])
     );
 
-    useEffect(() => {
-        if( !end && (contentHeight<=layoutHeight) ) update_old_messages();
-        // if(messages.length>0) chatDatabase.insertMessages(messages,group.id);
 
-        // let messages_ = messages;
-        // let currentUserId = -1;
-        // for(let i=messages_.length-1;i>=0;i--){
-        //     if(messages_[i].user._id != currentUserId) messages_[i].is_first = true; else messages_[i].is_first = false;
-        //     currentUserId = messages_[i].user._id;
+    const data_to_messages = (data) => {
+        // console.log(data);
+        // for(let i=0;i<data.length;i++){
+        //     let user = {};
+        //     let user_data = data[i].userData.split(' , ');
+        //     user._id = user_data[0];
+        //     user.name = user_data[1];
+        //     user.pic = user_data[2];
+        //     delete msg.userData;
+        //     msg.user = user;
         // }
-        // setMessages(messages_);
+        return data;
+    }
 
-    }, [messages]) 
+    async function loadChats() {
+        try {
+            await chatDatabase.setupDatabaseAsync()
+            await chatDatabase.getMessages((data)=> setMessages(data_to_messages(data)))
 
-    const renderHeaderRight = () => (
-        <TouchableOpacity
-            onPress={() => {navigation.navigate('chat-setting', {group:group, other:other} )} }
-        >
-            <Avatar.Image size={40} style={{backgroundColor:'rgba(0,0,0,0.1)', marginRight:10}} source={{ uri: group_pic }} />
-      </TouchableOpacity>
-    )
+            
+            Services.get_new_messages(group.id,'');
+        //   if(messages.length==0)
+        //   await chatDatabase.insertMessages(payload.data)
+  
+        } catch (e) {
+          console.warn(e);
+        }
+    }
+
+    // const get_new_messages = (lastId) => {
+    //     while(){
+    //         Services.get('chat/getMessages?conversationID='+group.id+'&lastID='+lastId,
+    //             (payload)=> {
+    //                 setMessages(payload.data)
+    //                 if(payload.next!=null) get_new_messages();
+    //                 else resolve("Stuff worked!");
+    //             }
+    //         );
+    //     }
+    // }
+
+    // useEffect(() => {
+    //     if( !end && (contentHeight<=layoutHeight) ) update_old_messages();
+
+    //     // let messages_ = messages;
+    //     // let currentUserId = -1;
+    //     // for(let i=messages_.length-1;i>=0;i--){
+    //     //     if(messages_[i].user._id != currentUserId) messages_[i].is_first = true; else messages_[i].is_first = false;
+    //     //     currentUserId = messages_[i].user._id;
+    //     // }
+    //     // setMessages(messages_);
+
+    // }, [messages]) 
 
     const reset_messages = () => {
         setEnd(false);
-        Services.get('chat/getMessages?conversationID='+group.id,
-            (payload) => {
-                setMessages(data_to_messages(payload.data));
-                // chatDatabase.dropDatabaseTablesAsync();
-                chatDatabase.deleteConversation(group.id);
-                chatDatabase.insertMessages(data_to_messages(payload.data),group.id);
-            },
-            () => {
-                chatDatabase.getMessages(group.id,setMessages);
-            },
-        );
+        // Services.get('chat/getMessages?conversationID='+group.id,reset_messages_action);
+        Services.get('chat/getMessages?conversationID='+group.id,loadChats);
     }
 
-
-    const update_old_messages = () => { 
-        let lastID = '';
-        if(messages.length>0) lastID = messages[messages.length-1]._id;
-        Services.get('chat/getMessages?conversationID='+group.id+'&before=y&lastID='+lastID,
-            (payload) => {
-                setMessages(messages.concat(data_to_messages(payload.data)));
-                chatDatabase.insertMessages(data_to_messages(payload.data),group.id);
-            }
-        );
-    };
-
-    const data_to_messages = (data) => {
-        if(data.length==0) setEnd(true);
-        let new_messages = [];
-        for(let i=0;i<data.length;i++){
-            let new_msg = {user:{}};
-            new_msg._id = data[i].message_id;
-            new_msg.text = data[i].body;
-            new_msg.type = data[i].type;
-            new_msg.createdAt = data[i].created_at;
-            switch (data[i].type) {
-                case 'image': {
-                    new_msg.image = data[i].attachment;
-                }
-                break;
-                case 'video': {
-                    new_msg.video = data[i].attachment;
-                }
-                break;
-                case 'audio': {
-                    new_msg.audio = data[i].attachment;
-                }
-                break;
-             }
-            new_msg.is_sender = data[i].is_sender;
-            new_msg.user.name = data[i].sender.name;
-            new_msg.user._id = data[i].sender.id;
-            new_msg.user.pic = data[i].sender.pic;
-            new_messages.push(new_msg);
-        }
-        return new_messages;
+    const reset_messages_action = (payload) => {
+        setMessages(data_to_messages(payload.data));
     }
+
+    // const update_old_messages = () => { 
+    //     Services.get('chat/getMessages?conversationID='+group.id+'&before=y&lastID='+messages[messages.length-1]._id,update_old_messages_action);
+    // };
+
+    // const update_old_messages_action = (payload) => {
+    //     setMessages(messages.concat(data_to_messages(payload.data)));
+    // }
+
+    // const data_to_messages = (data) => {
+    //     if(data.length==0) setEnd(true);
+    //     let new_messages = [];
+    //     for(let i=0;i<data.length;i++){
+    //         let new_msg = {user:{}};
+    //         new_msg._id = data[i].message_id;
+    //         new_msg.text = data[i].body;
+    //         new_msg.type = data[i].type;
+    //         switch (data[i].type) {
+    //             case 'image': {
+    //                 new_msg.image = data[i].attachment;
+    //             }
+    //             break;
+    //             case 'video': {
+    //                 new_msg.video = data[i].attachment;
+    //             }
+    //             break;
+    //             case 'audio': {
+    //                 new_msg.audio = data[i].attachment;
+    //             }
+    //             break;
+    //          }
+    //         new_msg.is_sender = data[i].is_sender;
+    //         new_msg.user.name = data[i].sender.name;
+    //         new_msg.user._id = data[i].sender.id;
+    //         new_msg.user.pic = data[i].sender.pic;
+    //         new_messages.push(new_msg);
+    //     }
+    //     return new_messages;
+    // }
+
+    const renderHeaderRight = () => (
+        <TouchableOpacity
+            onPress={() => {navigation.navigate('admin-setting')} }
+        >
+            <Avatar.Image size={40} source={{ uri: group_pic }} style={{marginRight:10}} />
+      </TouchableOpacity>
+    )
 
     const Upload = (props) => {
         if(showUpload){
@@ -157,7 +179,7 @@ export default function Chatroom({navigation,route}) {
                 {/* upload video */}
                 <TouchableHighlight 
                     onPress={() => {
-                        PickImage((url)=>addFilesChosen(url,'video'),(() => setShowFileChosen(false)),'video');
+                        PickImage(null,(() => setShowimagesChosen(false)),'video');
                         if (text=='') setText(' ');
                     }
                 }>
@@ -178,7 +200,7 @@ export default function Chatroom({navigation,route}) {
                 {/* upload photo */}
                 <TouchableHighlight 
                     onPress={() => {
-                        PickImage((url)=>addFilesChosen(url,'photo'),(() => setShowFileChosen(false)),'photo');
+                        PickImage(addImagesChosen,(() => setShowimagesChosen(false)),'photo');
                         if (text=='') setText(' ');
                     }
                 }>
@@ -205,61 +227,40 @@ export default function Chatroom({navigation,route}) {
         else return null;
     }
 
-    const addFilesChosen = (fileurl,type) => {
+    const addImagesChosen = (newPhotourl) => {
         setShowUpload(false);
-        setShowFileChosen(true);
-        if(type=='photo') setImageUrl(fileurl);
-        if(type=='video') setVideoUrl(fileurl);
+        setShowimagesChosen(true);
+        let newPhoto = { source: { uri: newPhotourl } };
+        setImageUrl(imageUrl.concat(newPhoto));
+        setImagesChosen(imagesChosen.concat(newPhotourl));
+        console.log(imageUrl);
     }
 
-    const renderFileChosen = () => {
+    const renderImageChosen= () => {
+    // if(imagesChosen.length>0) 
        return(
-            <View style={{ height:'100%', width:'100%', backgroundColor: 'black' }}>
-                {imageUrl!=''?(
-                    <Image
-                        source={{uri:imageUrl}}
-                        style={{ width:'100%', height:'100%'}}
-                        resizeMode="contain"
-                    />
-                ):(null)}
-                {videoUrl!=''?(
-                    <Video
-                        source={{ uri: videoUrl }}
-                        rate={1.0}
-                        volume={1.0}
-                        isMuted={false}
-                        shouldPlay={false}
-                        useNativeControls={true}
-                        style={{ width:'100%', height:'100%'}}
-                        resizeMode="contain"
-                    />
-                ):(null)}
+            <View >
+                <Gallery
+                    style={{ flex: 1, backgroundColor: 'black' }}
+                    images={imageUrl}
+                />
             </View>
         )
     }
 
     const imageSendText = (text) => {
-        if(showFileChosen && text=='') setText(' ');
+        if(showimagesChosen && text=='') setText(' ');
         else setText(text);
     }
     
     const renderBubble = (props) => { 
-        let bubbleWrapperStyle,bubbleStyle;
-
-        if (props.currentMessage.type=='system'){
-            bubbleWrapperStyle = styles.bubbleWrapperMid;
-            bubbleStyle = styles.bubbleMid;
+        let bubbleWrapperStyle = styles.bubbleWrapperLeft;
+        let bubbleStyle = styles.bubbleLeft;
+        if (props.currentMessage.is_sender) {
+            bubbleWrapperStyle = styles.bubbleWrapperRight;
+            bubbleStyle = styles.bubbleRight;
         }
-        else {
-            if (props.currentMessage.is_sender) {
-                bubbleWrapperStyle = styles.bubbleWrapperRight;
-                bubbleStyle = styles.bubbleRight;
-            }
-            else {
-                bubbleWrapperStyle = styles.bubbleWrapperLeft;
-                bubbleStyle = styles.bubbleLeft;
-            }
-        }
+        // if (props.currentMessage.user._id==userData.id) bubbleStyle = styles.bubbleRight;
         return (
             <View style={[styles.bubbleWrapper,bubbleWrapperStyle]}>
                 {props.currentMessage.is_first? (
@@ -272,7 +273,6 @@ export default function Chatroom({navigation,route}) {
                 <View style={[styles.bubble,bubbleStyle]}>
                     {props.currentMessage.type=='image' ? (<MessageImage {...props} />):(null)} 
                     {props.currentMessage.type=='audio' ? (<MessageAudio {...props} />):(null)} 
-                    {props.currentMessage.type=='video' ? (<MessageVideo {...props} />):(null)} 
                     {props.currentMessage.text!='' ? (<Text style={styles.bubbleText}>{props.currentMessage.text}</Text>):(null)} 
                 </View>
             </View>
@@ -282,7 +282,7 @@ export default function Chatroom({navigation,route}) {
     const renderSend = (props) => {
 
         const SendContent = () => {
-            if ((props.text && props.text.trim().length > 0)||showFileChosen) {
+            if ((props.text && props.text.trim().length > 0)||showimagesChosen) {
                 return (
                     <Text style={{fontSize:18, color:'#993f7e'}}>發送</Text>
                 );
@@ -322,7 +322,7 @@ export default function Chatroom({navigation,route}) {
 
     const renderActions = (props) => {
         let upload_button;
-        if (!showFileChosen) upload_button = 
+        if (!showimagesChosen) upload_button = 
             <TouchableOpacity onPress={() => {setShowUpload(true)}}>
             <Image
                 source={require('@/img/icon_upload.png')}
@@ -338,9 +338,6 @@ export default function Chatroom({navigation,route}) {
             {upload_button}
             <TouchableOpacity
             onPress={() => {console.log(messages);}}
-            // onPress={() => {chatDatabase.getMessages();}}
-            // onPress={() => {chatDatabase.dropDatabaseTablesAsync();}}
-            
                 
             >
             <Image
@@ -385,17 +382,13 @@ export default function Chatroom({navigation,route}) {
     }
 
     function handleSend(newMessage = []) {
-        setShowFileChosen(false);
-        if(imageUrl!='') {
-            Services.send_msg(group.id,'image',newMessage[0].text,reset_messages,imageUrl);
-            setImageUrl('');
+        setShowimagesChosen(false);
+        if(imagesChosen.length>0) {
+            Services.send_msg(group.id,'image',newMessage[0].text,reset_messages,imagesChosen[0]);
+            setImageUrl([]);
+            setImagesChosen([]);
         }
-        else if(videoUrl!='') {
-            // Services.upload_video(group.id,newMessage[0].text,videoUrl,reset_messages);
-            Services.send_msg(group.id,'video',newMessage[0].text,reset_messages,videoUrl);
-            setVideoUrl('');
-        }
-        else if(audioUrl!=''){
+        else if(audioUrl){
             Services.send_msg(group.id,'audio','',reset_messages,audioUrl);
             setAudioUrl('');
         }
@@ -412,15 +405,19 @@ export default function Chatroom({navigation,route}) {
         <GiftedChat
             listViewProps={{
                 scrollEventThrottle: 400,
+                onScroll: ({ nativeEvent }) => {
+                    // console.log(nativeEvent);
+                    // handleScroll(nativeEvent);
+                },
                 onLayout: ({nativeEvent}) => {
                     setLayoutHeight(nativeEvent.layout.height);
                 },
                 onContentSizeChange: (w,h) => {
                     setContentHeight(h);
                 },
-                onEndReached: (e) => {
-                    update_old_messages();
-                },
+                // onEndReached: (e) => {
+                //     update_old_messages();
+                // },
             }
         }
         // ref={(ref) => setChatRef(ref)}
@@ -429,14 +426,14 @@ export default function Chatroom({navigation,route}) {
         user={{ _id: 1 }}
         renderAvatar={null}
         renderTime={() => void 0}
-        renderMessage={showFileChosen? renderFileChosen:null}
+        renderMessage={showimagesChosen? renderImageChosen:null}
         renderBubble={renderBubble}
         renderInputToolbar={renderInputToolbar}
         renderActions={renderActions}
         renderComposer={renderComposer}
         renderSend={renderSend}
         // renderMessageAudio={renderMessageAudio}
-        // renderMessageVideo={renderMessageVideo}
+        renderMessageVideo={renderMessageVideo}
         // renderMessageImage={renderMessageImage}
         minInputToolbarHeight={55}
         onInputTextChanged={imageSendText}
@@ -550,23 +547,17 @@ const styles = StyleSheet.create({
   bubbleWrapperLeft:{
     marginRight:'auto',
     marginLeft:8,
+    alignItems:'flex-start',
   },
   bubbleWrapperRight:{
     marginLeft:'auto',
     marginRight:15,
-  },
-  bubbleWrapperMid:{
-    marginLeft:'auto',
-    marginRight:'auto',
+    alignItems:'flex-end',
   },
   bubbleLeft:{
     backgroundColor:'rgb(219,180,211)',
   },
   bubbleRight:{
     backgroundColor:'rgb(203,203,203)',
-  },
-  bubbleMid:{
-    backgroundColor:'rgb(187,225,248)',
-    maxWidth: 250,
   },
 });

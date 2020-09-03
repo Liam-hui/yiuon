@@ -1,34 +1,51 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, Dimensions  } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, Dimensions,TouchableWithoutFeedback,Modal } from 'react-native';
 import FormInput from '@/components/FormInput';
 import FormButton from '@/components/FormButton';
+import { Avatar} from 'react-native-paper';
 
-export default function PopOutOption({text,butTextTop,butTextBot,butFuncTop,butFuncBot}) {
+export default function PopOutOption({close,text,butTextTop,butTextBot,butFuncTop,butFuncBot,avatar}) {
 
     return (
-        <View style={styles.container}>
-            <View style={styles.box}>
-                <Text style={styles.text}>{text}</Text>
-                <FormButton
-                title={butTextTop}
-                addStyle={{marginTop:18}}
-                modeValue='contained'
-                labelStyle={{fontSize: 20}}
-                onPress={() => {
-                    if(butFuncTop)butFuncTop();
-                }}
-                />
-                <FormButton
-                title={butTextBot}
-                addStyle={{marginTop:20}}
-                modeValue='contained'
-                labelStyle={{fontSize: 20}}
-                onPress={() => {
-                    if(butFuncBot)butFuncBot();
-                }}
-                />
+        <Modal
+            animationType='fade'
+            transparent={true}
+            visible={true}
+        >
+            <View style={styles.container}>
+                <TouchableWithoutFeedback onPress={()=>{if(close)close();}}><View style={styles.empty}></View></TouchableWithoutFeedback>
+                <View style={styles.box}>
+                    <View style={styles.row}>
+                        {avatar? (
+                            <Avatar.Image size={35} style={{backgroundColor:'rgba(0,0,0,0.1)',marginRight:10}} source={{uri:avatar}} />
+                        ):(null)
+                        }
+                        <Text style={styles.text}>{text}</Text>
+                    </View>
+                    <FormButton
+                    title={butTextTop}
+                    addStyle={{marginTop:18}}
+                    modeValue='contained'
+                    labelStyle={{fontSize: 20}}
+                    onPress={() => {
+                        if(butFuncTop)butFuncTop();
+                    }}
+                    />
+                    {butTextBot?
+                    (<FormButton
+                        title={butTextBot}
+                        addStyle={{marginTop:20}}
+                        modeValue='contained'
+                        labelStyle={{fontSize: 20}}
+                        onPress={() => {
+                            if(butFuncBot)butFuncBot();
+                        }}
+                    />)
+                    :(null)
+                    }
+                </View>
             </View>
-        </View>
+        </Modal>
     );
   }
   
@@ -39,7 +56,7 @@ export default function PopOutOption({text,butTextTop,butTextBot,butFuncTop,butF
         left:0,
         height:Dimensions.get('window').height,
         width: Dimensions.get('window').width,
-        // backgroundColor: 'black',
+        backgroundColor: 'rgba(0,0,0,0.5)',
         justifyContent: 'center',
         alignItems: 'center'
     },
@@ -49,14 +66,22 @@ export default function PopOutOption({text,butTextTop,butTextBot,butFuncTop,butF
         borderWidth: 1.5,
         borderColor: '#ad7e9f',
         borderRadius: 15,
-        height: 200,
-        marginBottom: 100,
         paddingHorizontal: 30,
         paddingVertical: 20,
     },
     text: {
         color: '#ad7e9f',
         fontSize: 23,
+    },
+    row: {
+        flexDirection:'row',
+        alignItems:'center'
+    },
+    empty:{
+        position:'absolute',
+        width:'100%',
+        height:'100%',
+        // backgroundColor:'black',
     }
   
   });

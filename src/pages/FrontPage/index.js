@@ -1,16 +1,17 @@
 import React from 'react';
-import { View, StyleSheet, ImageBackground, Image, Dimensions, Text,TouchableOpacity} from 'react-native';
-
+import { View, StyleSheet, ImageBackground, Image, Dimensions, Text,TouchableOpacity,SafeAreaView} from 'react-native';
 
 export default function FrontPageScreen({navigation}) {
   
   return (
+    <SafeAreaView>
     <ImageBackground
       style={{width: '100%', height: '100%'}}
       resizeMode='cover' 
       source={require('@/img/background-4.jpg')}
     > 
-      <View style={{position:'absolute',right:20,top:40,flex:0,justifyContent:'end',alignItems:'flex-end'}}>
+      {/* <View> */}
+      <View style={{position:'absolute',right:20,top:40,flex:0,alignItems:'flex-end'}}>
         <Text style={{fontSize:20,color:'#a04a97',marginBottom:3}}>年老的有智慧,壽高的有知識</Text>
         <Text style={{fontSize:16,color:'#111111'}}>《約伯記第12章：12節》</Text>
       </View>
@@ -91,6 +92,7 @@ export default function FrontPageScreen({navigation}) {
 
       </View>
     </ImageBackground>
+    </SafeAreaView>
   );
 }
 

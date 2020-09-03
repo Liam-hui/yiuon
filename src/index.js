@@ -1,8 +1,8 @@
-import React from 'react';
-import { Provider as PaperProvider } from 'react-native-paper';
-import { Provider } from 'react-redux';
-import store from '@/store';
-import Routes from '@/routes';
+import React from "react";
+import { Provider as PaperProvider } from "react-native-paper";
+import { Provider } from "react-redux";
+import store from "@/store";
+import Routes from "@/routes";
 
 export default function App() {
   return (
@@ -13,7 +13,3 @@ export default function App() {
     </Provider>
   );
 }
-
-
-
-

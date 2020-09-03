@@ -5,11 +5,11 @@ import { StyledContainer, StyledTitle } from './styles';
 
 const { width, height } = Dimensions.get('screen');
 
-export default function FormInput({ labelName, ...rest }) {
+export default function FormInput({ labelName,addStyle, ...rest }) {
   return (
     <TextInput
       label={labelName}
-      style={styles.input}
+      style={[styles.input, addStyle]}
       numberOfLines={1}
       {...rest}
     />

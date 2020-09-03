@@ -1,1 +1,1 @@
-const host = 'yiuonapp.itisdemo.com/'
+const host = "yiuonapp.itisdemo.com/";

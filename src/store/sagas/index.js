@@ -21,41 +21,36 @@ export default function* rootSaga() {
 }
 
 function* LoginAction(action) {
-  let payload = [];
-  let loggedIn = false;
-  let myType = '';
+  let auth = {};
+  const loggedIn = true;
+  let userType = '';
   let userData = [];
-  if(action.payload.status=='success') {
-    const { type,id, name, member_number, pic, token } = action.payload.payload;
-    storage.setToken(token);
-    loggedIn = true;
-    myType = type;
-    userData = {
-      member_number: member_number,
-      id: id,
-      name: name,
-      pic: pic,
-    };
-    RootNavigation.navigate('Main');
-  }
-  else console.log(action.payload.msg);
-
-  RootNavigation.navigate('Main');
-
-  payload = {
+  
+  const { type,id, name, member_number, pic,token } = action.payload;
+  storage.setAuth(JSON.stringify(action.payload));
+  userType = type;
+  userData = {
+    member_number: member_number,
+    id: id,
+    name: name,
+    pic: pic,
+  };
+  auth = {
     loggedIn,
-    myType,
+    userType,
     userData,
-  }
+  }  
+    // RootNavigation.navigate('Main');
+  
 
   yield put({
     type: types.LOGIN_FINISH,
-    payload: payload
+    payload: auth
   });
 }
 
 function* LogoutAction(action) {
-  storage.removeToken();
+  storage.removeAuth();
   RootNavigation.navigate('Auth');
 
   yield put({

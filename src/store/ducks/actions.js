@@ -20,9 +20,14 @@ const logoutAction = () => {
   return { type: types.LOGOUT_REQUEST };
 };
 
+const invalidTokenAction = (status) =>{
+  return { type: types.INVALID_TOKEN, payload: status };
+}
+
 export default {
   drawer_turnon,
   drawer_turnoff,
   loginAction,
   logoutAction,
+  invalidTokenAction
 };

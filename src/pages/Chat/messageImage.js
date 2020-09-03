@@ -1,59 +1,57 @@
-import React, { Component } from 'react';
-import { Image, StyleSheet, View, } from 'react-native';
-import Lightbox from '@/components/Lightbox';
+import React, {useState, useEffect } from 'react';
+import { Image, StyleSheet, View, TouchableOpacity} from 'react-native';
+import MessageMediaFull from '@/pages/Chat/messageMediaFull';
 const max_height = 120;
 const max_width = 150;
 const styles = StyleSheet.create({
-    container: {},
     image: {
-        borderRadius: 13,
         margin: 3,
         resizeMode: 'contain'
     },
-    imageActive: {
-        flex: 1,
-        resizeMode: 'contain',
-        backgroundColor: '#342733',
-    },
-});
-export default class MessageImage extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            width: 0,
-            height: 0,
-          };
-    }
 
-    render() {
-        const { currentMessage } = this.props;
-        Image.getSize(currentMessage.image, (w, h) => { 
-            let ratio = w/h;
-            if(w>h) {
-                h = max_width/ratio;
-                w = max_width;
-            }
-            else{
-                w = max_height*ratio;
-                h = max_height;
-            }
-            this.setState({
-                width: w,
-                height: h,
-            });
-         });
-        //  console.log(this.state.width,this.state.height);
-        if (!!currentMessage) {
-            return (
-                <View style={[styles.container]}>
-                <Lightbox activeProps={{
-                        style: styles.imageActive,
-                    }} >
-                    <Image style={[styles.image,{ width:this.state.width, height:this.state.height}]} source={{ uri: currentMessage.image }}/>
-                </Lightbox>
-                </View>
-            );
+});
+
+export default function MessageImage(props){
+    const [width, setWidth] = useState(0);
+    const [height, setHeight] = useState(0);
+    const [full, setFull] = useState(false);
+    
+    const {currentMessage} = props;
+    console.log(currentMessage);
+
+    Image.getSize(currentMessage.image, (w, h) => { 
+        let ratio = w/h;
+        if(w>h) {
+            h = max_width/ratio;
+            w = max_width;
         }
-        return null;
+        else{
+            w = max_height*ratio;
+            h = max_height;
+        }
+        setWidth(w);
+        setHeight(h);
+    });
+
+    if (!!currentMessage) {
+        return (
+            <>
+            {full?(
+                <MessageMediaFull
+                    content={(
+                        <Image style={[styles.image,{ width:'100%', height:'100%'}]} source={{ uri: currentMessage.image }}/>
+                    )}
+                    close={()=>setFull(false)}
+                />
+            ):(
+                <TouchableOpacity onPress={()=>setFull(true)}>
+                    <Image style={[styles.image,{ width:width, height:height}]} source={{ uri: currentMessage.image }}/>
+                </TouchableOpacity>
+
+            )}
+            </>
+        );
     }
+    return null;
+
 }

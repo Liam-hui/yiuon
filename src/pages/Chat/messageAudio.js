@@ -1,6 +1,17 @@
-import React, {useState, useEffect } from 'react';
-import { Text, View, StyleSheet,ImageBackground,TouchableOpacity,TouchableHighlight,Image,Slider} from 'react-native';
+import React from 'react';
+import { View, StyleSheet,TouchableOpacity,Image,Slider} from 'react-native';
 import { Audio} from 'expo-av';
+import { Asset } from 'expo-asset';
+
+class Icon {
+  constructor(module, width, height) {
+    this.module = module;
+    this.width = width;
+    this.height = height;
+    Asset.fromModule(this.module).downloadAsync();
+  }
+}
+const ICON_THUMB = new Icon(require('./assets/images/thumb_1.png'), 10, 10);
 
 export default class MessageAudio extends React.Component {
   constructor(props) {
@@ -28,22 +39,6 @@ export default class MessageAudio extends React.Component {
       rate: 1.0,
     };
   }
-
-  // async _loadAudio() {
-  //   const soundObject = new Audio.Sound();
-  //   try {
-  //     const { sound, status } = await Audio.Sound.createAsync(
-  //       { uri: this.props.currentMessage.audio },
-  //       { shouldPlay: false }
-  //     );
-  //     console.log('done');
-  //     // Your sound is playing!
-  //   } catch (error) {
-  //     console.log('error');
-  //     // An error occurred!
-  //   }
-  //   // console.log(sound);
-  // }
 
   async _loadAudio() {
     const { sound, status } = await Audio.Sound.createAsync(
@@ -127,24 +122,26 @@ export default class MessageAudio extends React.Component {
         <View style={styles.audioContainer}>
             <Image
                 source={require('@/img/voice_icon.png')}
-                style={{ width:35, height:35, marginRight:5}}
+                style={{ width:25, height:25, marginRight:3}}
                 resizeMode="contain"
             />
-            <TouchableHighlight onPress={ () => {
-                this._onPlayPausePressed()
+            <TouchableOpacity onPress={ () => {
+              this._onPlayPausePressed()
             }}>
                 <Image
-                    source={this.state.isPlaying ? require('@/img/voice_icon_fail_play.png') : require('@/img/voice_play.png')}
-                    style={{ width:25, height:25, marginRight:5}}
-                    resizeMode="contain"
+                  source={this.state.isPlaying ? require('@/img/voice_icon_fail_play.png') : require('@/img/voice_play.png')}
+                  style={{ width:15, height:15, marginRight:5}}
+                  resizeMode="contain"
                 />
-            </TouchableHighlight>
+            </TouchableOpacity>
             <Slider
-                style={styles.playbackSlider}
-                value={this._getSeekSliderPosition()}
-                onValueChange={this._onSeekSliderValueChange}
-                onSlidingComplete={this._onSeekSliderSlidingComplete}
-                // disabled={!this.state.isPlaybackAllowed || this.state.isLoading}
+              // trackImage={ICON_TRACK_1.module}
+              thumbImage={ICON_THUMB.module}
+              style={styles.slider}
+              value={this._getSeekSliderPosition()}
+              onValueChange={this._onSeekSliderValueChange}
+              onSlidingComplete={this._onSeekSliderSlidingComplete}
+              // disabled={!this.state.isPlaybackAllowed || this.state.isLoading}
             />
         </View>
     );
@@ -152,15 +149,12 @@ export default class MessageAudio extends React.Component {
 }
 
 const styles = StyleSheet.create({
-    audioContainer:{
-        flex:0,
-        flexDirection:'row',
-        alignItems: 'center',
-        // width:200,
-        height:50,
-        //   backgroundColor: 'black',
-      },
-      playbackSlider:{
-        width:150,
-      },
+  audioContainer:{
+      flexDirection:'row',
+      alignItems: 'center',
+      // backgroundColor: 'black',
+    },
+    slider:{
+      width:80,
+    },
 });
