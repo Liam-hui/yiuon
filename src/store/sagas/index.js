@@ -1,5 +1,6 @@
 import types from "@/store/ducks/types";
 import storage from '@/utils/storage';
+import store from '@/store';
 import * as RootNavigation from '@/navigation/RootNavigation';
 
 import {
@@ -17,6 +18,7 @@ export default function* rootSaga() {
   yield all([
     takeLatest(types.LOGIN_REQUEST, LoginAction),
     takeLatest(types.LOGOUT_REQUEST, LogoutAction),
+    takeLatest(types.MSG_RESPONSE, MsgResponseAction),
   ]);
 }
 
@@ -49,7 +51,7 @@ function* LoginAction(action) {
   });
 }
 
-function* LogoutAction(action) {
+function* LogoutAction() {
   storage.removeAuth();
   RootNavigation.navigate('Auth');
 
@@ -58,6 +60,26 @@ function* LogoutAction(action) {
   });
 }
 
+function* MsgResponseAction(action) {
+  let newMsg = action.payload;
+  const newMessages = store.getState().newMessages;
+  // console.log('a',newMessages);
+  
+  // alert(newMsg.device_uniqid);
+  // console.log('one',newMsg.device_uniqid);
+  const new_ = newMessages.every(function(msg){
+    return msg.device_uniqid != newMsg.device_uniqid;
+  });
+
+  if(!new_) newMsg = null;
+  // if(!new_) alert('more than');
+
+
+  yield put({
+    type: types.INSERT_MSG,
+    payload:newMsg 
+  });
+}
 
 export function* initUserData() {
   const userData = JSON.parse(localStorage.getItem("auth"));
@@ -68,3 +90,4 @@ export function* initUserData() {
     });
   }
 }
+

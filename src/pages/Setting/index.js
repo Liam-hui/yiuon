@@ -34,7 +34,6 @@ function SettingScreen({navigation}) {
             <FormButton
               title='更改頭像'
               addStyle={{marginTop:60}}
-              modeValue='contained'
               labelStyle={{fontSize: 20}}
               onPress = {() => {
                 PickImage(change_pic);
@@ -45,7 +44,6 @@ function SettingScreen({navigation}) {
               //  onPress={() => Services.get('user/profile',(data)=>setUserData(data))}
               title='更改密碼'
               addStyle={{marginTop:18}}
-              modeValue='contained'
               labelStyle={{fontSize: 20}}
             />
           </View>

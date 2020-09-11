@@ -1,7 +1,7 @@
 import api from '@/services/api';
 import actions from '@/store/ducks/actions';
 import store from '@/store';
-
+import {Chat} from '@/pages/Chat/handle_chat';
 
 export const Services = {
   //get
@@ -15,6 +15,7 @@ export const Services = {
   change_pic,
 
   //chat
+  get_rooms,
   get_user_list_chat,
   two_people_chat,
   get_new_messages,
@@ -24,6 +25,7 @@ export const Services = {
   create_group,
   delete_group,
   add_member_to_group,
+  remove_member_from_group,
 
 
   //album
@@ -36,11 +38,15 @@ export const Services = {
 };
 
 //get
-function get(url,set,errorFunc) {
+function get(url,set,errorFunc,after) {
   api.get(url, {
   })
   .then((response) => {
-    if(response.data.payload) set(response.data.payload);
+    if(response.data.payload) {
+      // console.log(response.data.payload);
+      set(response.data.payload);
+      if(after) after();
+    }
     else if(errorFunc)errorFunc();
   }, (error) => {
     console.log(error);
@@ -64,10 +70,7 @@ function logIn(member_number,password,setFail,after) {
   })
   .then((response) => {
     console.log('a',response.data.payload);
-    if(response.data.status=='success') {
-      store.dispatch(actions.loginAction(response.data.payload));
-      store.dispatch(actions.invalidTokenAction(false));
-    }
+    if(response.data.status=='success') store.dispatch(actions.loginAction(response.data.payload));
       else {setFail(1); if(after)after();}
   }, (error) => {
     console.log(error);
@@ -82,6 +85,7 @@ function logOut() {
     store.dispatch(actions.logoutAction());
   }, (error) => {
     console.log(error);
+    store.dispatch(actions.logoutAction());
   });
 }
 
@@ -125,10 +129,12 @@ function change_password(member_number,old_password,password,password_confirmati
 function change_pic(uri,set) {
   let body = new FormData();
   const type = uri.split('.').pop();
+  const name = uri.split('/').pop();
+  console.log(name);
   const photo = {
     uri: uri,
     type: 'image/'+type,
-    name: 'photo.jpg',
+    name: 'name',
   };
   body.append('image', photo);
 
@@ -195,6 +201,18 @@ function create_album(title,date_for_display,getID) {
 
 
 //chat
+function get_rooms(init,getStored) {
+  api.get('chat/getRooms', {
+  })
+  .then((response) => {
+    if(response.data.payload) init(response.data.payload);
+    else getStored();
+  }, (error) => {
+    console.log(error);
+    getStored();
+  });
+}
+
 function get_user_list_chat(set) {
   // const token = storage.getToken();
   // console.log(storage.getToken());
@@ -218,6 +236,7 @@ function two_people_chat(targetID,set) {
   .then((response) => {
     console.log(response.data.payload);
     set(response.data.payload);
+    Chat.kickMember(response.data.payload.users);
   }, (error) => {
     console.log(error);
   });
@@ -318,6 +337,7 @@ function update_group(conversationID,title,after) {
   api.post('chat/updateGroup', body,{
   })
   .then((response) => {
+    console.log(response.data);
     if(response.data.status=='success' && after) after();;
   }, (error) => {
     console.log(error);
@@ -343,7 +363,10 @@ function create_group(members,title,image,after) {
   api.post('chat/createGroup', body,{
   })
   .then((response) => {
-    if(response.data.status=='success') after(response.data.payload);
+    if(response.data.status=='success') {
+      after(response.data.payload);
+      Chat.kickMember(response.data.payload.users);
+    }
   }, (error) => {
     console.log(error);
   });
@@ -370,7 +393,24 @@ function add_member_to_group(conversationID,members,after) {
   })
   .then((response) => {
     console.log(response.data);
-    if(response.data.status=='success' && after) after();;
+    if(response.data.status=='success') {
+      if(after) after();
+    }
+  }, (error) => {
+    console.log(error);
+  });
+}
+
+function remove_member_from_group(conversationID,id,after) {
+  let body = new FormData();
+  body.append('ids[]', id);
+  body.append('conversationID', conversationID);
+
+  api.post('chat/removeMember', body,{
+  })
+  .then((response) => {
+    console.log(response.data);
+    if(response.data.status=='success' && after) after();
   }, (error) => {
     console.log(error);
   });

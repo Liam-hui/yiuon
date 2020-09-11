@@ -20,8 +20,16 @@ const logoutAction = () => {
   return { type: types.LOGOUT_REQUEST };
 };
 
-const invalidTokenAction = (status) =>{
-  return { type: types.INVALID_TOKEN, payload: status };
+const invalidTokenAction = value =>{
+  return { type: types.INVALID_TOKEN, payload: value };
+}
+
+const msgResponseAction = value =>{
+  return { type: types.MSG_RESPONSE, payload: value };
+}
+
+const removeNewMsgAction = value =>{
+  return { type: types.REMOVE_MSG, payload: value };
 }
 
 export default {
@@ -29,5 +37,7 @@ export default {
   drawer_turnoff,
   loginAction,
   logoutAction,
-  invalidTokenAction
+  invalidTokenAction,
+  msgResponseAction,
+  removeNewMsgAction,
 };

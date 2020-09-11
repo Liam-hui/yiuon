@@ -1,6 +1,6 @@
 import React, {useState, useEffect } from 'react';
 import { Image, StyleSheet, View, TouchableOpacity} from 'react-native';
-import MessageMediaFull from '@/pages/Chat/messageMediaFull';
+import MediaFull from '@/components/MediaFull';
 const max_height = 120;
 const max_width = 150;
 const styles = StyleSheet.create({
@@ -17,7 +17,6 @@ export default function MessageImage(props){
     const [full, setFull] = useState(false);
     
     const {currentMessage} = props;
-    console.log(currentMessage);
 
     Image.getSize(currentMessage.image, (w, h) => { 
         let ratio = w/h;
@@ -37,11 +36,13 @@ export default function MessageImage(props){
         return (
             <>
             {full?(
-                <MessageMediaFull
+                <MediaFull
                     content={(
                         <Image style={[styles.image,{ width:'100%', height:'100%'}]} source={{ uri: currentMessage.image }}/>
                     )}
                     close={()=>setFull(false)}
+                    uri={currentMessage.image}
+                    type={'image'}
                 />
             ):(
                 <TouchableOpacity onPress={()=>setFull(true)}>

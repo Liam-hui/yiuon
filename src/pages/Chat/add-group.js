@@ -89,7 +89,6 @@ function AddNewGroupScreen({navigation,route}) {
               <FormButton
                   title='建立'
                   onPress={()=>handleSubmit()}
-                  modeValue='contained'
                   labelStyle={{fontSize: 18}}
               />
             </View>

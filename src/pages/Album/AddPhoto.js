@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ImageBackground, Image, Text, TouchableOpacity, SafeAreaView,ScrollView,Dimensions,FlatList} from 'react-native';
-import { Title,Button } from 'react-native-paper';
+import { Title} from 'react-native-paper';
 import FormInput from '@/components/FormInput';
 import FormButton from '@/components/FormButton';
 import {PickImage} from '@/components/PickImage';
@@ -9,8 +9,8 @@ import { Services } from '@/services/';
 import PopOutOptionFull from '@/components/PopOutOptionFull';
 import{useSelector,useDispatch} from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
-
-const screenWidth = Math.round(Dimensions.get('window').width);
+import { ImageManipulator } from 'expo-image-crop'
+import moment from 'moment';
 
 export default function AddPhotoScreen({route,navigation}) {
     const [cover, setCover] = useState(null);
@@ -21,18 +21,12 @@ export default function AddPhotoScreen({route,navigation}) {
     const [warning, setWarning] = useState(' ');
 
     const [submitPop, setSubmitPop] = useState(false);
+    const [editImage, setEditImage] = useState('');
     const [optionCover, setOptionCover] = useState(true);
 
     const {item,newAlbum} = route.params;
 
     const member_type = useSelector(state => state.auth_state.userType);
-
-    const getCurrentDate=()=>{
-      var date = new Date().getDate();
-      var month = new Date().getMonth() + 1;
-      var year = new Date().getFullYear();
-      return date + '/' + month + '/' + year;
-    }
 
     useFocusEffect(
       React.useCallback(() => {
@@ -40,7 +34,7 @@ export default function AddPhotoScreen({route,navigation}) {
           setName(item.title);
           setDate(item.date_for_display);
         }
-        else setDate( getCurrentDate() );
+        else setDate( moment().format('DD/MM/YYYY') );
   
         return () => {};
       }, [])
@@ -53,9 +47,9 @@ export default function AddPhotoScreen({route,navigation}) {
 
     }, []);
     
-    const handle_upload = () => {
-      if(optionCover) PickImage(addCoverPhoto);
-      if(!optionCover) PickImage(addPhotos);
+    const addPhoto = (uri) => {
+      if(optionCover)setCover(uri);
+      else setPhotos(photos.concat(uri));
     }
 
     const handle_submit = () => {
@@ -78,23 +72,13 @@ export default function AddPhotoScreen({route,navigation}) {
 
       navigation.goBack();
     }
-
-    const addCoverPhoto = (newPhoto) => {
-      setCover(newPhoto);
-      setSubmitPop(false);
-    }
-
-    const addPhotos = (newPhoto) => {
-      setPhotos(photos.concat(newPhoto));
-      setSubmitPop(false);
-    }
   
     const CoverPhoto = () => {
       if(cover) return(
         <Image 
           source={{ uri: cover }}
-          style={{width:screenWidth*0.8, height:screenWidth*0.55}}
-          resizeMode="cover"
+          style={{width:'100%', height:200}}
+          resizeMode="contain"
         /> 
       );
       else return null;
@@ -106,7 +90,7 @@ export default function AddPhotoScreen({route,navigation}) {
           <Image 
               source={{ uri: item.item}}
               style={{width:'100%', height:'100%'}}
-              resizeMode="cover"
+              resizeMode="contain"
           />
           <TouchableOpacity 
             style={styles.closeButton}
@@ -187,7 +171,6 @@ export default function AddPhotoScreen({route,navigation}) {
                 <FormButton
                   title='＋上傳相片'
                   addStyle={{marginTop:5,marginBottom:10}}
-                  modeValue='contained'
                   labelStyle={{fontSize: 20}}
                   onPress = {() => {
                     setWarning(' ');
@@ -205,7 +188,6 @@ export default function AddPhotoScreen({route,navigation}) {
               <FormButton
                 title='＋上傳相片'
                 addStyle={{marginTop:5,marginBottom:10}}
-                modeValue='contained'
                 labelStyle={{fontSize: 20}} 
                 onPress = {() => {
                   setWarning(' ')
@@ -214,13 +196,13 @@ export default function AddPhotoScreen({route,navigation}) {
                 }}      
               />  
                 <FlatList
-                data={photos}
-                style={{marginTop: 10}}
-                renderItem={renderPhotos}
-                keyExtractor={(item) => item.id}
-                numColumns='2'
-                extraData={photos}
-                columnWrapperStyle={{flex:0,justifyContent: 'space-between',marginBottom:15}}
+                  data={photos}
+                  style={{marginTop: 10}}
+                  renderItem={renderPhotos}
+                  keyExtractor={(item) => item.id}
+                  numColumns='2'
+                  extraData={photos}
+                  columnWrapperStyle={{flex:0,justifyContent: 'space-between',marginBottom:15}}
                 />
             </View>
 
@@ -229,7 +211,6 @@ export default function AddPhotoScreen({route,navigation}) {
                 <FormButton
                   title='提交'
                   addStyle={{marginTop:8,marginBottom:40}}
-                  modeValue='contained'
                   labelStyle={{fontSize: 20}}
                   onPress={()=>handle_submit()}
                 />  
@@ -238,12 +219,26 @@ export default function AddPhotoScreen({route,navigation}) {
 
         </ScrollView>
 
+        {editImage!=''?(
+            <ImageManipulator
+                photo={{"uri": editImage }}
+                isVisible={true}
+                onPictureChoosed={({ uri: uriM }) => addPhoto(uriM)}
+                onToggleModal={()=> { setEditImage('');}}
+            />
+        ):(null)}
+
         {submitPop? (
           <PopOutOptionFull
           text={'圖片提交後會經職員審批才能在相簿內刊登,若經職員發現不適當的內容,圖片有機會被刪除。'}
           butTextTop={'確定'}
           butTextBot={'返回'}
-          butFuncTop={handle_upload}
+          butFuncTop={
+            PickImage((uri)=>{
+              setSubmitPop(false);
+              setEditImage(uri);
+            }
+          )}
           butFuncBot={()=>setSubmitPop(false)}
           />
           ):(null)
@@ -254,6 +249,7 @@ export default function AddPhotoScreen({route,navigation}) {
   );
 }
 
+const screenWidth = Math.round(Dimensions.get('window').width);
 const styles = StyleSheet.create({
   container: {
     flex: 1,

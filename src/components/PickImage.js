@@ -18,13 +18,12 @@ export const PickImage = async (func,cancel_func,the_type) => {
     try {
         let result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: type,
-        allowsEditing: true,
-        aspect: [4, 3],
+        // allowsEditing: true,
+        // aspect: [4, 3],
         quality: 1,
         });
         if (!result.cancelled) {
             func(result.uri);
-            // console.log(result);
         }
         else {
           if(cancel_func)cancel_func();

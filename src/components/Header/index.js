@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View,TouchableOpacity, Image, Button, Text } from 'react-native';
+import { View,TouchableOpacity, Image, Button, Text, Platform} from 'react-native';
+import NetInfo from '@react-native-community/netinfo';
 import { Appbar, Avatar, useTheme, DefaultTheme, IconButton } from 'react-native-paper';
 import { DrawerActions,useRoute } from '@react-navigation/native';
 import{useSelector,useDispatch} from 'react-redux';
@@ -35,7 +36,9 @@ const theme = {
   },
 };
 
+
 export const Header = ({ scene, navigation}) => {
+
   // console.log(scene.descriptor.options);
     const title = scene.descriptor.options.headerTitle;
     const color_mode = scene.descriptor.options.color_mode;
@@ -58,7 +61,6 @@ export const Header = ({ scene, navigation}) => {
         break;
     }
     
-
     const drawer_on = useSelector(state => state.drawer_on);
     const invalidToken = useSelector(state => state.invalidToken);
 
@@ -66,17 +68,13 @@ export const Header = ({ scene, navigation}) => {
       if(right)
          return right();
       return null;
-      // return (
-      //   <TouchableOpacity onPress={()=>console.log(invalidToken)}>
-      //   <Text>adfadsf</Text>
-      //   </TouchableOpacity>
-      // )
     }
     
     return (
       <Appbar.Header
+        // statusBarHeight={50}
         theme={{ colors: { primary: color_chosen.bg } }}
-        style={{ paddingHorizontal:5}}
+        style={{paddingHorizontal:5}}
       >
         {back ? (
           <Appbar.BackAction

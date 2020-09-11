@@ -12,10 +12,22 @@ const drawerReducer = ( state = false, action ) => {
   }
 }
 
+const msgReducer = ( state = [], action ) => {
+  switch( action.type ) {
+      case types.INSERT_MSG:
+        return state.concat(action.payload)
+      case types.REMOVE_MSG:
+        return state.filter(x => x.id != action.payload)
+      default: return state;
+  }
+}
+
 const invalidTokenReducer = ( state = false, action ) => {
   switch( action.type ) {
       case types.INVALID_TOKEN:
         return action.payload
+      case types.LOGOUT_FINISH:
+        return false
       default: return state;
   }
 }
@@ -23,7 +35,7 @@ const invalidTokenReducer = ( state = false, action ) => {
 const defaultAuthState = {
   loggedIn:false,
   userType: '',
-  userData: []
+  userData: [],
 };
 
 const authReducer = (state = defaultAuthState, action) => {
@@ -48,6 +60,7 @@ const reducers = combineReducers({
   drawer_on: drawerReducer,
   auth_state: authReducer,
   invalidToken: invalidTokenReducer,
+  newMessages: msgReducer,
 });
 
 const store = createStore(
@@ -56,9 +69,3 @@ const store = createStore(
 );
 
 export default reducers;
-
-
-
-// store.subscribe( () => console.log(store.getState() )  );
-// store.dispatch(actions.change_title('adfasdf') );
-

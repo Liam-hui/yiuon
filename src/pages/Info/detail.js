@@ -1,22 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import {Image, SafeAreaView, View, ImageBackground, StyleSheet, Text, Dimensions, TouchableOpacity,TouchableWithoutFeedback } from "react-native";
 import { Services } from '@/services/';
-import { useFocusEffect } from '@react-navigation/native';
 
 function InfoDetail({route, navigation}) {
-  const {item,change_like} = route.params;
+  let {item,index} = route.params;
+  if (item.is_fav) item.is_fav=true; else item.is_fav=false;
   const [fav,setFav] = useState(item.is_fav);
   const [ratio, setRatio] = useState(0);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      Image.getSize(item.pic, (w, h) => { 
-        setRatio(w/h);
-      });
-
-      return () => {};
-    }, [])
-  );
+  useEffect(() => {
+    Image.getSize(item.pic, (w, h) => { 
+      setRatio(w/h);
+    });
+  }, []);
 
   let like_url = require("@/img/icon_like-3.png") ;
   if(fav) like_url = require("@/img/icon_like-2.png");
@@ -41,12 +37,13 @@ function InfoDetail({route, navigation}) {
             onPress={() => {
               Services.fav_toggle(item.id);
               setFav(!fav);
+              route.params.change(index);
             }}
            >
             <Image 
-                      source={like_url}
-                      style={styles.icon}
-                      resizeMode="center"
+              source={like_url}
+              style={styles.icon}
+              resizeMode="center"
             />
           </TouchableWithoutFeedback>
           </View>

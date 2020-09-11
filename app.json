@@ -18,7 +18,11 @@
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "This app would like to save images to your device.",
+        "NSPhotoLibraryAddUsageDescription": "This app would like to save images to your device."
+      }
     },
     "description": ""
   }

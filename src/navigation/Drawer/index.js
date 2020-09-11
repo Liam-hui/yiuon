@@ -2,8 +2,6 @@ import React from 'react';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { DrawerContent} from './DrawerContent';
 
-
-
 import ChatStack from '@/navigation/ChatStack';
 import InfoStack from '@/navigation/InfoStack';
 import NewsStack from '@/navigation/NewsStack';
@@ -11,8 +9,6 @@ import AlbumStack from '@/navigation/AlbumStack';
 import SettingStack from '@/navigation/SettingStack';
 import ContactScreen from '@/pages/Contact';
 import FrontPageScreen from '@/pages/FrontPage';
-
-
 
 const Drawer = createDrawerNavigator();
 

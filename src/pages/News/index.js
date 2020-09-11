@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View,Image ,FlatList, SafeAreaView, ImageBackground, StyleSheet, Text, TouchableOpacity, ScrollView} from "react-native";
+import { View,Image ,FlatList, SafeAreaView, ImageBackground, StyleSheet, Text, RefreshControl, TouchableOpacity, ScrollView} from "react-native";
 import { Services } from '@/services/';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -8,11 +8,31 @@ function NewsScreen({navigation}) {
   const [end, setEnd] = useState(false);
   const [page, setPage] = useState(2);
 
+  const init = () => {
+    Services.get('news?page=1',(data) => setData(data.data));
+    setPage(2);
+    setEnd(false);
+  }
+
+  //refresh
+  const [refreshing, setRefreshing] = React.useState(false);
+
+  const wait = (timeout) => {
+    return new Promise(resolve => {
+      setTimeout(resolve, timeout);
+    });
+  };
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    init();
+
+    wait(1000).then(() => setRefreshing(false));
+  }, []);
+
   useFocusEffect(
     React.useCallback(() => {
-      Services.get('news?page=1',(data) => setData(data.data));
-      setPage(2);
-      setEnd(false);
+      init();
 
       return () => {};
     }, [])
@@ -57,15 +77,18 @@ function NewsScreen({navigation}) {
         source={require('@/img/background-6.png')}
       >
         <View style={styles.container}>
-            <FlatList
-              onEndReached={(e) => {
-                if(!end) Services.get('news?page='+(page),addToData);
-              }}
-              data={data}
-              renderItem={renderItem}
-              keyExtractor={(item) => item.id}
-              // extraData={}
-            />
+          <FlatList
+            onEndReached={(e) => {
+              if(!end) Services.get('news?page='+(page),addToData);
+            }}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+            data={data}
+            renderItem={renderItem}
+            keyExtractor={item => item.id.toString()}
+            // extraData={}
+          />
         </View>
 
       </ImageBackground>

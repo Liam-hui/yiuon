@@ -22,7 +22,8 @@ api.interceptors.request.use(async (config) => {
 
 api.interceptors.response.use(function (response) {
   if(response.data.msg=='Invalid Access Token') {
-    store.dispatch(actions.invalidTokenAction(true));
+    let logginIn = store.getState().auth_state.loggedIn;
+    if(logginIn) store.dispatch(actions.invalidTokenAction(true));
   }
   return response;
 }, function (error) {

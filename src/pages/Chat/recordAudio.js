@@ -1,19 +1,13 @@
 import React from 'react';
 import {
-  Dimensions,
   Image,
-  Slider,
   StyleSheet,
   Text,
-  TouchableHighlight,
-  TouchableWithoutFeedback,
   PanResponder,
   View,
 } from 'react-native';
-import { Asset } from 'expo-asset';
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
-import * as Font from 'expo-font';
 import * as Permissions from 'expo-permissions';
 
 export default class Record extends React.Component {
@@ -21,25 +15,13 @@ export default class Record extends React.Component {
     super(props);
     this.recording = null;
     this.sound = null;
-    this.isSeeking = false;
-    this.shouldPlayAtEndOfSeek = false;
     this.state = {
       outed: false,
       send: true,
       haveRecordingPermissions: false,
       isLoading: false,
-      isPlaybackAllowed: false,
-      muted: false,
-      soundPosition: null,
-      soundDuration: null,
       recordingDuration: null,
-      shouldPlay: false,
-      isPlaying: false,
       isRecording: false,
-      fontLoaded: false,
-      shouldCorrectPitch: true,
-      volume: 1.0,
-      rate: 1.0,
     };
     this.recordingSettings = JSON.parse(JSON.stringify(Audio.RECORDING_OPTIONS_PRESET_LOW_QUALITY));
   }
@@ -77,16 +59,8 @@ export default class Record extends React.Component {
   })
 
   componentDidMount() {
-    (async () => {
-      await Font.loadAsync({
-        'cutive-mono-regular': require('./assets/fonts/CutiveMono-Regular.ttf'),
-      });
-      this.setState({ fontLoaded: true });
-    })();
     this._askForPermissions();
   }
-
-
 
   async BeginRecording() {
     this.setState({
@@ -126,10 +100,11 @@ export default class Record extends React.Component {
     } catch (error) {
       // Do nothing -- we are already unloaded.
     }
-    const info = await FileSystem.getInfoAsync(this.recording.getURI());
-    if(this.state.send) this.props.onRecordEnd(info.uri);
-        // else this.props.onRecordEnd('');
-    // console.log("in",`FILE INFO: ${JSON.stringify(info)}`);
+    if(this.state.send && this.recording._finalDurationMillis>1000) { 
+      const info = await FileSystem.getInfoAsync(this.recording.getURI());
+      this.props.onRecordEnd(info.uri);
+      console.log("in",`FILE INFO: ${JSON.stringify(info)}`);
+    }
     
   }
 
@@ -146,31 +121,6 @@ export default class Record extends React.Component {
     this.setState({
       haveRecordingPermissions: response.status === 'granted',
     });
-  };
-
-  _updateScreenForSoundStatus = status => {
-    if (status.isLoaded) {
-      this.setState({
-        soundDuration: status.durationMillis,
-        soundPosition: status.positionMillis,
-        shouldPlay: status.shouldPlay,
-        isPlaying: status.isPlaying,
-        rate: status.rate,
-        muted: status.isMuted,
-        volume: status.volume,
-        shouldCorrectPitch: status.shouldCorrectPitch,
-        isPlaybackAllowed: true,
-      });
-    } else {
-      this.setState({
-        soundDuration: null,
-        soundPosition: null,
-        isPlaybackAllowed: false,
-      });
-      if (status.error) {
-        console.log(`FATAL PLAYER ERROR: ${status.error}`);
-      }
-    }
   };
 
   _updateScreenForRecordingStatus = status => {
@@ -205,19 +155,6 @@ export default class Record extends React.Component {
     return padWithZero(minutes) + ':' + padWithZero(seconds);
   }
 
-  _getPlaybackTimestamp() {
-    if (
-      this.sound != null &&
-      this.state.soundPosition != null &&
-      this.state.soundDuration != null
-    ) {
-      return `${this._getMMSSFromMillis(this.state.soundPosition)} / ${this._getMMSSFromMillis(
-        this.state.soundDuration
-      )}`;
-    }
-    return '';
-  }
-
   _getRecordingTimestamp() {
     if (this.state.isRecording && this.state.recordingDuration != null) {
       return `${this._getMMSSFromMillis(this.state.recordingDuration)}`;
@@ -228,44 +165,19 @@ export default class Record extends React.Component {
   render() {
     let {show, onRecordEnd} = this.props;
 
-    if(!this.state.fontLoaded) {
-        return (
-            <View style={styles.emptyContainer} />
-        )
-    }
-
-    if (!this.state.haveRecordingPermissions){
-        return (
-            <View style={styles.container}>
-                <View />
-                <Text style={[styles.noPermissionsText, { fontFamily: 'cutive-mono-regular' }]}>
-                  You must enable audio recording permissions in order to use this app.
-                </Text>
-                <View />
-            </View>
-        )
-    }
-
     if(show) return (
       <View style={styles.audioContainer}>
-        <Text style={{fontSize:20, color: '#994278',marginBottom:5}}>
+        <Text style={{fontSize:20, color: '#994278',marginBottom:5,opacity: this.state.isRecording ? 1.0 : 0.0 }}>
             {this._getRecordingTimestamp()}
          </Text>
 
 
         <View {...this.panResponder.panHandlers} >
-            {/* <TouchableWithoutFeedback
-                // {...this.panResponder.panHandlers}
-                onPressIn={this._onRecordPressed}
-                onPressOut={() => { this._onRecordPressed();}}
-                
-            > */}
-                <Image
-                    source={this.state.isRecording ? require('@/img/audio_record-2.png') : require('@/img/audio_record-1.png')}
-                    style={{ width:85, height:85,}}
-                    resizeMode="contain"
-                />
-            {/* </TouchableWithoutFeedback> */}
+          <Image
+              source={this.state.isRecording ? require('@/img/audio_record-2.png') : require('@/img/audio_record-1.png')}
+              style={{ width:85, height:85,}}
+              resizeMode="contain"
+          />
         </View>
 
         <Text style={{fontSize:20, color: 'black',marginTop:10, opacity: this.state.isRecording ? 1.0 : 0.0 }}>

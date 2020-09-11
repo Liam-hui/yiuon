@@ -4,28 +4,25 @@ import { Avatar} from 'react-native-paper';
 import { Services } from '@/services/';
 import { useFocusEffect } from '@react-navigation/native';
 import{useSelector,useDispatch} from 'react-redux';
+import {Chat} from '@/pages/Chat/handle_chat';
 
 function SearchUserListScreen({navigation,route}) {
   const {add_group,add_member,exist_members,id} = route.params;
   const member_type = useSelector(state => state.auth_state.userType);
 
+  const [keyword, setKeyword] = useState('');
   const [search, setSearch] = useState('');
-  const [searched, setSearched] = useState(false);
   const [selected, setSelected] = useState([]);
   const [warning, setWarning] = useState(' ');
 
   const [data, setData] = useState([]);
   const [end, setEnd] = useState(false);
-  const [page, setPage] = useState(2);
+  const [initDone, setInitDone] = useState(false);
+  const [page, setPage] = useState(1);
 
-  const [contentHeight, setContentHeight] = useState(1);
-  const [layoutHeight, setLayoutHeight] = useState(0);
 
   useFocusEffect(
     React.useCallback(() => {
-      Services.get('user/list?page=1',(data) => setData(filter_exist_member(data.data)));
-      setPage(2);
-      setEnd(false);
 
       if(add_group) navigation.setParams({
         title:'新增群組',
@@ -39,12 +36,30 @@ function SearchUserListScreen({navigation,route}) {
     navigation.setParams({
       pop: navigation.goBack,
     });
-
   }, []);
 
+  
   useEffect(() => {
-    if( !end && (contentHeight<=layoutHeight) ) Services.get('user/list?page='+(page)+'&keyword='+search,addToData);
+    if(!initDone) {
+      if(!end && data.length<15) Services.get('user/list?page='+(page)+'&keyword='+search,addToData);
+      else setInitDone(true);
+    }
   }, [data]) 
+
+  const init = () => {
+    setPage(1);
+    setEnd(false);
+    setInitDone(false);
+    setData([]);
+  }
+
+  const addToData = (newData) => {
+    if(newData.data.length>0) {
+      setPage(page+1);
+      setData(data.concat(filter_exist_member(newData.data)) );
+    }
+      else setEnd(true);
+  }
 
   const filter_exist_member = (data) => {
     if(add_member){
@@ -56,40 +71,16 @@ function SearchUserListScreen({navigation,route}) {
   }
 
   useEffect(() => {
-    if(searched){
-      Services.get('user/list?page=1',(data) => setData(filter_exist_member(data.data)));
-      setPage(2);
-      setEnd(false);
-      setSearched(false);
+    if(keyword==''&&search!=''){
+      init();
+      setSearch('');
     }
-  }, [search]) 
+  }, [keyword]) 
 
-  const handle_search = () => {
-    if(search!=''){
-      Services.get('user/list?page=1&keyword='+search,(data) => setData(filter_exist_member(data.data)));
-      setPage(2);
-      setEnd(false);
-      setSearched(true);
-    }
-  }
 
   const choose_chat = (id) => {
-    Services.two_people_chat(id,(data)=>navigation.push('chatroom',  {group:data}) );
+    Services.two_people_chat(id,(data)=>navigation.push('chatroom',  {group:data,newRoom:true}) );
   }
-
-  const addToData = (newData) => {
-    if(newData.data.length>0) {
-      setData(data.concat(filter_exist_member(newData.data)) );
-      setPage(page+1);
-    }
-      else setEnd(true);
-  }
-
-  // const handleScroll = (event) => {
-  //   if(!end && (event.nativeEvent.contentSize.height - event.nativeEvent.layoutMeasurement.height - event.nativeEvent.contentOffset.y) < 10 ) {
-  //     Services.get('user/list?page='+(page)+'&keyword='+search,addToData);
-  //   };
-  // }
 
   const renderItem = ({item}) => {
     let bg,textColor,status;  
@@ -138,9 +129,12 @@ function SearchUserListScreen({navigation,route}) {
               <TextInput 
                   style={styles.input}
                   placeholder="搜尋名稱"
-                  onChangeText={text => {setSearch(text);}}
+                  onChangeText={text => {setKeyword(text);}}
               />
-              <TouchableOpacity style={styles.enterButton} onPress={()=>handle_search()}>
+              <TouchableOpacity style={styles.enterButton} onPress={()=>{
+                setSearch(keyword);
+                init();
+              }}>
                 <Text style={styles.enterButtonText}>搜尋</Text>
               </TouchableOpacity>
             </View>
@@ -158,17 +152,11 @@ function SearchUserListScreen({navigation,route}) {
               contentContainerStyle={{marginTop:10,width:'100%',alignItems:'center'}}
               // onScroll={event=> {handleScroll(event);}}
               data={data}
-              onLayout={({nativeEvent}) => {
-                setLayoutHeight(nativeEvent.layout.height);
-              }}
-              onContentSizeChange={(w,h) => {
-                  setContentHeight(h);
-              }}
               onEndReached={(e) => {
-                Services.get('user/list?page='+(page)+'&keyword='+search,addToData);
+                if(initDone) Services.get('user/list?page='+(page)+'&keyword='+search,addToData);
               }}
               renderItem={renderItem}
-              keyExtractor={(item) => item.id}
+              keyExtractor={item => item.id.toString()}
               extraData={search,selected}
             />
           </View>
@@ -183,7 +171,11 @@ function SearchUserListScreen({navigation,route}) {
                 }
 
                 if(add_member&&selected.length>0){
-                  Services.add_member_to_group(id,selected,()=>navigation.goBack())
+                  Services.add_member_to_group(id,selected,()=>{
+                    Chat.kickMember(selected);
+                    route.params.onGoBack(selected);
+                    navigation.goBack({added:selected});
+                  })
                 }
               }}
             >

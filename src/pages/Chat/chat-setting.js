@@ -7,12 +7,13 @@ import{useSelector,useDispatch} from 'react-redux';
 import {PickImage} from '@/components/PickImage';
 import { Services } from '@/services/';
 import PopOutOption from '@/components/PopOutOption';
+import {Chat} from '@/pages/Chat/handle_chat';
 
 function ChatSettingScreen({navigation,route}) {
 
   const member_type = useSelector(state => state.auth_state.userType);
-  const {group,other} = route.params;
-  const [title, setTitle] = useState('');
+  let {group,other,title} = route.params;
+  const [newTitle, setNewTitle] = useState('');
 
   const [memberPop, setMemberPop] = useState(false);
   const [groupPop, setGroupPop] = useState(false);
@@ -21,14 +22,13 @@ function ChatSettingScreen({navigation,route}) {
 
   useFocusEffect(
     React.useCallback(() => {
-      let group_title;
-      if(group.isPrivate==1) group_title = group.users[other].name;
-      else group_title = group.title;
-      setTitle(group_title);
-      if(group_title=='')group_title=' ';
+      setNewTitle(title);
       navigation.setParams({
-          title:group_title,
+          // title:group_title,
+          pop: ()=> {route.params.onGoBack(group); navigation.goBack();},
       });
+
+      // console.log('d',added);
 
     return () => {};
     }, [])
@@ -81,10 +81,10 @@ function ChatSettingScreen({navigation,route}) {
                   <View style={[styles.inputWrapper,{marginTop:15}]}>
                     <TextInput 
                         style={styles.input}
-                        value={title}
-                        onChangeText={title => {setTitle(title);}}
+                        value={newTitle}
+                        onChangeText={title => {setNewTitle(title);}}
                     />
-                    <TouchableOpacity style={styles.enterButton} onPress = {() => {Services.update_group(group.id,title,()=>navigation.setParams({title:title}) )}}>
+                    <TouchableOpacity style={styles.enterButton} onPress = {() => {Services.update_group(group.id,newTitle,()=> { group.title=newTitle; navigation.setParams({title:newTitle}); route.params.changeTitle(newTitle); } )}}>
                       <Text style={styles.enterButtonText}>確定</Text>
                     </TouchableOpacity>
                   </View>
@@ -104,7 +104,7 @@ function ChatSettingScreen({navigation,route}) {
                     <FlatList
                     data={group.users}
                     renderItem={renderItem}
-                    keyExtractor={(item) => item.id}
+                    keyExtractor={item => item.id.toString()}
                     // extraData={selectedId}
                     />
                 </View>
@@ -113,7 +113,9 @@ function ChatSettingScreen({navigation,route}) {
             }
 
             {member_type=='staff' && group.isPrivate==0? ( 
-              <TouchableOpacity onPress={() =>  {navigation.push('search_user_list',{add_member:true, title:title, id:group.id,exist_members:group.users})} }>
+              <TouchableOpacity onPress={() =>  {
+                navigation.push('search_user_list',{add_member:true, title:title, id:group.id,exist_members:group.users,onGoBack: (added) => group.users = group.users.concat(added)  })} 
+              }>
                 <Text style={[styles.item,styles.add]}>+增加成員</Text>
               </TouchableOpacity>
             ):(null)
@@ -125,7 +127,6 @@ function ChatSettingScreen({navigation,route}) {
                       title={group.isPrivate==0? ('刪除群組'):('刪除對話')}
                       onPress={()=>setGroupPop(true)}
                       // addStyle={{marginTop:30}}
-                      modeValue='contained'
                       labelStyle={{fontSize: 18}}
                   />
               </View>
@@ -141,8 +142,14 @@ function ChatSettingScreen({navigation,route}) {
               butTextBot={member_type=='staff'? ('把'+selectedItem.name+'移除'):(null)}
               butFuncTop={()=>{
                 Services.two_people_chat(selectedItem.id,(group)=>navigation.push('chatroom',  {group:group}));
+                setMemberPop(false);
               }}
-              // butFuncBot={()=>setPop(false)}
+              butFuncBot={()=>Services.remove_member_from_group(group.id,selectedItem.id,()=>{
+                group.users = group.users.filter(x => x.id!=selectedItem.id);
+                Chat.messageSystem(group);
+                Chat.kickMember([selectedItem]);
+                setMemberPop(false);
+              })}
               />
             ):(null)
             }
@@ -153,7 +160,10 @@ function ChatSettingScreen({navigation,route}) {
               text={group.isPrivate==0? ('清除群組對話內容？'):('清除對話內容？')}
               butTextTop={'確定'}
               butTextBot={'返回'}
-              butFuncTop={()=>{Services.delete_group(group.id,()=>navigation.popToTop())}}
+              butFuncTop={()=>{Services.delete_group(group.id,() => {
+                navigation.popToTop(); 
+                Chat.kickMember(group.users);
+              } )}}
               butFuncBot={()=>setGroupPop(false)}
               />
             ):(null)

@@ -1,5 +1,5 @@
 import React, {useState, useEffect } from 'react';
-import { Text, View, StyleSheet,ImageBackground,TouchableOpacity,Image,SafeAreaView,ScrollView,FlatList} from 'react-native';
+import { Text, View, StyleSheet,ImageBackground,TouchableOpacity,Image,RefreshControl,SafeAreaView,FlatList} from 'react-native';
 import { IconButton } from 'react-native-paper';
 import { Services } from '@/services/';
 import { useFocusEffect } from '@react-navigation/native';
@@ -12,11 +12,32 @@ function AlbumScreen({ navigation,route}) {
 
   const member_type = useSelector(state => state.auth_state.userType);
 
+  const init = () => {
+    Services.get('albums?page=1',(data)=>setData(data.data) );
+    setPage(2);
+    setEnd(false);
+  }
+
+  //refresh
+  const [refreshing, setRefreshing] = React.useState(false);
+
+  const wait = (timeout) => {
+    return new Promise(resolve => {
+      setTimeout(resolve, timeout);
+    });
+  };
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    init();
+
+    wait(1000).then(() => setRefreshing(false));
+  }, []);
+
+
   useFocusEffect(
     React.useCallback(() => {
-      Services.get('albums?page=1',(data)=>setData(data.data) );
-      setPage(2);
-      setEnd(false);
+      init();
 
       return () => {};
     }, [])
@@ -52,11 +73,11 @@ function AlbumScreen({ navigation,route}) {
 
   const renderItem = ({ item }) => {
     return (
-      <TouchableOpacity onPress={() => navigation.navigate('album-open',  {title:item.title, item: item})} style={styles.item} >
+      <TouchableOpacity onPress={() => navigation.navigate('detail',  {title:item.title, item: item})} style={styles.item} >
         <Image 
-              source={{ uri: item.pic}}
-              style={{width:'100%', height:'100%'}}
-              resizeMode="cover"
+          source={{ uri: item.pic}}
+          style={{width:'100%', height:'100%'}}
+          resizeMode="cover"
         />
         <View style={styles.title}>
           <Text style={{color: '#A24982',fontSize:20}}>{item.title}</Text>
@@ -74,15 +95,18 @@ function AlbumScreen({ navigation,route}) {
       >
         <View style={styles.container}>
           
-            <FlatList
-              onEndReached={(e) => {
-                if(!end) Services.get('albums?page='+(page),addToData);
-              }}
-              data={data}
-              renderItem={renderItem}
-              keyExtractor={(item) => item.id}
-              // extraData={selectedId}
-            />
+          <FlatList
+            onEndReached={(e) => {
+              if(!end) Services.get('albums?page='+(page),addToData);
+            }}
+            data={data}
+            renderItem={renderItem}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+            keyExtractor={item => item.id.toString()}
+            // extraData={selectedId}
+          />
             
         </View>
       </ImageBackground>

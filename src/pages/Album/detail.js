@@ -1,16 +1,18 @@
 import React, {useState, useEffect } from 'react';
 import { View, StyleSheet,ImageBackground,TouchableOpacity,Image,SafeAreaView,FlatList} from 'react-native';
 import { IconButton } from 'react-native-paper';
-import Lightbox from '@/components/Lightbox';
 import { Services } from '@/services/';
 import { useFocusEffect } from '@react-navigation/native';
+import MediaFull from '@/components/MediaFull';
 
-function AlbumOpenScreen({ route, navigation}) {
+function AlbumDetailScreen({ route, navigation}) {
 
   const {item} = route.params;
   const [data, setData] = useState([]);
   const [end, setEnd] = useState(false);
   const [page, setPage] = useState(2);
+  const [full, setFull] = useState(null);
+
 
   useFocusEffect(
     React.useCallback(() => {
@@ -49,23 +51,30 @@ function AlbumOpenScreen({ route, navigation}) {
     </TouchableOpacity>
   )
 
-  const renderItem  = ({ item }) => (
-    // <TouchableOpacity onPress={onPress} style={styles.item} >
-    <Lightbox 
-      style={styles.item}
-      activeProps={{
-        style: styles.imageActive,
-      }} 
-    >
-      <Image 
-            source={{ uri: item.pic}}
-            style={{width:'100%', height:'100%'}}
-            // style={{width:20, height:20}}
-            // resizeMode="contain"
-      />
-      </Lightbox>
-    // </TouchableOpacity>
-  );
+  const renderItem  = ({item}) => {
+    let showFull=false;
+    if(full==item.id) showFull=true;
+    return (
+      <>  
+        <TouchableOpacity style={styles.item} onPress={()=>{setFull(item.id)}}>
+          <Image 
+              source={{ uri: item.pic}}
+              style={{width:'100%', height:'100%'}}
+              resizeMode="cover"
+          />
+        </TouchableOpacity>
+        {showFull?(
+          <MediaFull
+          content={(
+              <Image style={{ width:'100%', height:'100%',resizeMode:'contain'}} source={{ uri: item.pic }}/>
+          )}
+          close={()=>setFull(null)}
+          uri={item.pic}
+        />
+        ):(null)} 
+      </>
+    )
+  };
 
   return (
     <SafeAreaView>
@@ -78,11 +87,11 @@ function AlbumOpenScreen({ route, navigation}) {
             <FlatList
               data={data}
               renderItem={renderItem}
-              keyExtractor={(item) => item.id}
+              keyExtractor={item => item.id.toString()}
               onEndReached={(e) => {
                 if(!end) Services.get('album/'+item.id+'?page='+page,addToData);
               }}
-              // extraData={selectedId}
+              extraData={full}
             />
 
         </View>
@@ -110,4 +119,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AlbumOpenScreen;
+export default AlbumDetailScreen;

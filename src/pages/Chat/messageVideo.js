@@ -1,9 +1,7 @@
 import React, {useState, useEffect } from 'react';
-import { Image, StyleSheet, View, TouchableOpacity} from 'react-native';
-import MessageMediaFull from '@/pages/Chat/messageMediaFull';
+import { Image, StyleSheet, Dimensions,View, TouchableOpacity} from 'react-native';
+import MediaFull from '@/components/MediaFull';
 import {Video} from 'expo-av';
-const max_height = 120;
-const max_width = 150;
 const styles = StyleSheet.create({
     container: {
         margin: 0,
@@ -24,17 +22,22 @@ const styles = StyleSheet.create({
 export default function MessageVideo(props){
     const [width, setWidth] = useState(1);
     const [height, setHeight] = useState(1);
-    const [widthFull, setWidthFull] = useState(null);
-    const [heightFull, setHeightFull] = useState(null);
+    const [fullWidth, setFullWidth] = useState(1);
+    const [fullHeight, setFullHeight] = useState(1);
     const [full, setFull] = useState(false);
     
     const {currentMessage} = props;
 
     const set_size = (data) => {
-        console.log('running');
         let w=data.naturalSize.width;
         let h=data.naturalSize.height;
         let ratio = w/h;
+        let max_width = 150;
+        let max_height = 120;
+        if(full){
+            max_width=Dimensions.get('window').width;
+            max_height=Dimensions.get('window').height;
+        }
         if(w>h) {
             h = max_width/ratio;
             w = max_width;
@@ -43,20 +46,25 @@ export default function MessageVideo(props){
             w = max_height*ratio;
             h = max_height;
         }
-        setWidth(w);
-        setHeight(h);
-        // if(ratio>1) {
-        //     setWidthFull('100%')
-        // }
+        if(full){
+            setFullWidth(w);
+            setFullHeight(h);
+        }
+        else{
+            setWidth(w);
+            setHeight(h);
+        }
     }
 
     if (!!currentMessage) {
         return (
             <>
             {full?(
-                <MessageMediaFull
+                <MediaFull
+                    uri={currentMessage.video}
+                    type={'video'}
                     content={(
-                        <View style={{height:'50%',width:'100%'}}>
+                        // <View style={{height:'100%',width:'100%'}}>
                             <Video
                                 source={{ uri: currentMessage.video }}
                                 rate={1.0}
@@ -64,12 +72,11 @@ export default function MessageVideo(props){
                                 isMuted={false}
                                 resizeMode="contain"
                                 shouldPlay={false}
+                                onReadyForDisplay={data => set_size(data)}
                                 useNativeControls={true}
-                                // onReadyForDisplay={data => set_size(data)}
-                                // resizeMode='Video.RESIZE_MODE_CONTAIN'
-                                style={[styles.image,{ width:'100%', height:'100%'}]}
+                                style={{ width:fullWidth, height:fullHeight}}
                             />
-                        </View>
+                        // </View>
                     )}
                     close={()=>setFull(false)}
                 />
@@ -84,7 +91,7 @@ export default function MessageVideo(props){
                         shouldPlay={false}
                         useNativeControls={false}
                         onReadyForDisplay={data => set_size(data)}
-                        style={[styles.image,{ width:'100%', height:'100%'}]}
+                        style={{ width:'100%', height:'100%'}}
                     />
                     <TouchableOpacity onPress={()=>setFull(true)} style={styles.empty}>
                         <Image

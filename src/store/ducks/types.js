@@ -9,6 +9,10 @@ const LOGOUT_FINISH = "app/duck/LOGOUT_FINISH";
 
 const INVALID_TOKEN = "app/duck/INVALID_TOKEN";
 
+const MSG_RESPONSE = "app/duck/MSG_RESPONSE";
+const INSERT_MSG = "app/duck/INSERT_MSG";
+const REMOVE_MSG = "app/duck/REMOVE_MSG";
+
 
 export default {
     DRAWER_TURNON,
@@ -18,4 +22,7 @@ export default {
     LOGIN_FINISH,
     LOGOUT_FINISH,
     INVALID_TOKEN,
+    MSG_RESPONSE,
+    INSERT_MSG,
+    REMOVE_MSG,
 };

@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ImageBackground, Image, Text, TouchableHighlight, SafeAreaView, ScrollView} from 'react-native';
+import { View, StyleSheet, ImageBackground, Image, Text, TouchableHighlight, TouchableOpacity, SafeAreaView, ScrollView} from 'react-native';
 import { Title } from 'react-native-paper';
 import FormInput from '@/components/FormInput';
 import FormButton from '@/components/FormButton';
 import { Services } from '@/services/';
-import actions from '@/store/ducks/actions';
-import store from '@/store';
-
 
 export default function LoginScreen({navigation}) {
   const [number, setNumber] = useState('');
@@ -18,7 +15,6 @@ export default function LoginScreen({navigation}) {
   }
 
   React.useCallback(() => {
-    store.dispatch(actions.invalidTokenAction(false));
 
     return () => {};
   }, [])
@@ -55,21 +51,15 @@ export default function LoginScreen({navigation}) {
           <FormButton
             title='登入'
             addStyle={{marginTop:10}}
-            modeValue='contained'
             labelStyle={{fontSize: 20}}
             onPress={() => {
               handleLogin(number,password,setFail);
             }}
           />
         </View>
-        <FormButton
-            title='忘記密碼'
-            addStyle={{marginTop:10}}
-            modeValue='text'
-            uppercase={false}
-            labelStyle={{fontSize: 16}}
-            onPress={() => {navigation.push('ForgetPassword')}}
-          />
+        <TouchableOpacity onPress={() => {navigation.push('ForgetPassword')}}>
+            <Text style={{marginVertical:20,fontSize:16,fontWeight:'500',color:'#a04b97'}}>忘記密碼</Text>
+        </TouchableOpacity>
           <View style={styles.bottomButtonWrapper}>
             <TouchableHighlight 
               style={[styles.bottomButton,{left:0}]}

@@ -67,7 +67,6 @@ export default function Password() {
           <FormButton
             title='提交'
             addStyle={{marginTop:30}}
-            modeValue='contained'
             labelStyle={{fontSize: 20}}
             onPress={() => {handleSubmit()}}
           />

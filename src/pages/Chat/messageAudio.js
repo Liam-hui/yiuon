@@ -1,53 +1,43 @@
 import React from 'react';
-import { View, StyleSheet,TouchableOpacity,Image,Slider} from 'react-native';
+import { View, StyleSheet,TouchableOpacity,Image,Slider,Text} from 'react-native';
 import { Audio} from 'expo-av';
-import { Asset } from 'expo-asset';
-
-class Icon {
-  constructor(module, width, height) {
-    this.module = module;
-    this.width = width;
-    this.height = height;
-    Asset.fromModule(this.module).downloadAsync();
-  }
-}
-const ICON_THUMB = new Icon(require('./assets/images/thumb_1.png'), 10, 10);
 
 export default class MessageAudio extends React.Component {
   constructor(props) {
     super(props);
-    this.recording = null;
     this.sound = null;
     this.isSeeking = false;
-    this.shouldPlayAtEndOfSeek = false;
+    this.position = 0;
     this.state = {
-      outed: false,
       send: true,
-      haveRecordingPermissions: false,
       isLoading: false,
       isPlaybackAllowed: false,
-      muted: false,
       soundPosition: null,
       soundDuration: null,
-      recordingDuration: null,
       shouldPlay: false,
       isPlaying: false,
-      isRecording: false,
-      fontLoaded: false,
-      shouldCorrectPitch: true,
-      volume: 1.0,
-      rate: 1.0,
     };
   }
+  
 
   async _loadAudio() {
-    const { sound, status } = await Audio.Sound.createAsync(
-      {uri: this.props.currentMessage.audio},
-      {shouldPlay: false},
-      this._updateScreenForSoundStatus
-    );
-    this.sound = sound;
-    // console.log(status);
+    console.log(this.props.currentMessage.audio);
+    try {
+      const { sound, status } = await Audio.Sound.createAsync(
+        {uri: this.props.currentMessage.audio},
+        // {uri: 'https://file-examples-com.github.io/uploads/2017/11/file_example_WAV_1MG.wav'},
+        {shouldPlay: true},
+        this._updateScreenForSoundStatus
+      );
+      this.sound = sound;
+      // if(this.position!=0){
+      //   const seekPosition = value * this.state.soundDuration;
+      //   this.sound.setPositionAsync(seekPosition);
+      // }
+    } catch (error) {
+      console.log(error)
+    }
+
   }
 
   _updateScreenForSoundStatus = status => {
@@ -72,14 +62,15 @@ export default class MessageAudio extends React.Component {
   };
 
   _onPlayPausePressed = () => {
-      // console.log(this.sound);
-      if (this.sound != null) {
-          if (this.state.isPlaying) {
+    if(this.sound == null) this._loadAudio();
+    else {
+      // this.sound.playAsync();
+        if (this.state.isPlaying) {
           this.sound.pauseAsync();
-          } else {
+        } else {
           this.sound.playAsync();
-          }
-      }
+        }
+    }
   };
 
   _getSeekSliderPosition() {
@@ -94,27 +85,40 @@ export default class MessageAudio extends React.Component {
   }
 
   _onSeekSliderValueChange = value => {
-    if (this.sound != null && !this.isSeeking) {
+    if(!this.isSeeking){
       this.isSeeking = true;
-      this.shouldPlayAtEndOfSeek = this.state.shouldPlay;
-      this.sound.pauseAsync();
+      if (this.sound != null) {
+        this.sound.pauseAsync();
+      }
     }
   };
 
   _onSeekSliderSlidingComplete = async value => {
+    this.isSeeking = false;
+    this.position = value;
     if (this.sound != null) {
-      this.isSeeking = false;
       const seekPosition = value * this.state.soundDuration;
-      if (this.shouldPlayAtEndOfSeek) {
-        this.sound.playFromPositionAsync(seekPosition);
-      } else {
-        this.sound.setPositionAsync(seekPosition);
-      }
+      this.sound.setPositionAsync(seekPosition);
     }
   };
   
+  _getMMSSFromMillis(millis) {
+    const totalSeconds = millis / 1000;
+    const seconds = Math.floor(totalSeconds % 60);
+    const minutes = Math.floor(totalSeconds / 60);
+
+    const padWithZero = number => {
+      const string = number.toString();
+      if (number < 10) {
+        return '0' + string;
+      }
+      return string;
+    };
+    return padWithZero(minutes) + ':' + padWithZero(seconds);
+  }
+
   componentDidMount() {
-    this._loadAudio();
+    // this._loadAudio();
   }
 
   render() {
@@ -122,27 +126,32 @@ export default class MessageAudio extends React.Component {
         <View style={styles.audioContainer}>
             <Image
                 source={require('@/img/voice_icon.png')}
-                style={{ width:25, height:25, marginRight:3}}
+                style={{ width:25, height:28}}
                 resizeMode="contain"
             />
             <TouchableOpacity onPress={ () => {
-              this._onPlayPausePressed()
-            }}>
+                this._onPlayPausePressed()
+              }}
+              style={styles.button}
+            >
                 <Image
-                  source={this.state.isPlaying ? require('@/img/voice_icon_fail_play.png') : require('@/img/voice_play.png')}
-                  style={{ width:15, height:15, marginRight:5}}
+                  source={this.state.isPlaying ? require('@/img/pause_btn.png') : require('@/img/voice_play.png')}
+                  style={{ width:18, height:18}}
                   resizeMode="contain"
                 />
             </TouchableOpacity>
             <Slider
               // trackImage={ICON_TRACK_1.module}
-              thumbImage={ICON_THUMB.module}
+              thumbImage={require('@/img/rect.png')}
               style={styles.slider}
               value={this._getSeekSliderPosition()}
               onValueChange={this._onSeekSliderValueChange}
               onSlidingComplete={this._onSeekSliderSlidingComplete}
-              // disabled={!this.state.isPlaybackAllowed || this.state.isLoading}
+              disabled={!this.state.isPlaybackAllowed || this.state.isLoading}
             />
+            {this.state.isPlaybackAllowed?(
+              <Text style={styles.time}>{this._getMMSSFromMillis(this.state.soundPosition)+' / '+this._getMMSSFromMillis(this.state.soundDuration)}</Text>
+            ):(null)}
         </View>
     );
    }
@@ -150,11 +159,25 @@ export default class MessageAudio extends React.Component {
 
 const styles = StyleSheet.create({
   audioContainer:{
-      flexDirection:'row',
-      alignItems: 'center',
-      // backgroundColor: 'black',
-    },
-    slider:{
-      width:80,
-    },
+    flexDirection:'row',
+    alignItems: 'center',
+    // backgroundColor: 'black',
+  },
+  button:{
+    // backgroundColor:'green',
+    height:40,
+    width:30,
+    alignItems:'center',
+    justifyContent:'center',
+  },
+  slider:{
+    width:100,
+    // backgroundColor:'red',
+  },
+  time:{
+    fontSize:11,
+    position:'absolute',
+    right:0,
+    bottom:-5,
+  }
 });

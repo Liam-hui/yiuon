@@ -2,13 +2,16 @@ import React, {useState, useEffect } from 'react';
 import { Text, View, StyleSheet,ImageBackground,TouchableOpacity,Image,SafeAreaView,FlatList} from 'react-native';
 import { Avatar,IconButton } from 'react-native-paper';
 import { Services } from '@/services/';
+import { Chat} from '@/pages/Chat/handle_chat';
+import { chatDatabase } from '@/services/ChatDatabase';
 import { useFocusEffect } from '@react-navigation/native';
 import{ useSelector,useDispatch } from 'react-redux';
 import { AsyncStorage } from 'react-native';
 
 function ChatScreen({navigation}) {
   const userData = useSelector(state => state.auth_state.userData);
-  const [data,setData] = useState([]);
+  const [rooms,setRooms] = useState([]);
+  const [loadedRooms,setLoadedRooms] = useState([]);
   const [update,setUpdate] = useState(0);
 
   useEffect(() => {
@@ -16,37 +19,70 @@ function ChatScreen({navigation}) {
       // color_mode: 2,
       right: renderHeaderRight,
     });
+
+    async function set_table() {
+      try {
+        await chatDatabase.setupDatabaseAsync();
+        // await chatDatabase.dropDatabaseTablesAsync();
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+    set_table();
+    Services.get_rooms(
+      (data)=>{
+        setRooms(data);
+        Chat.runSocket(data,refreshRooms);
+        AsyncStorage.setItem('rooms', JSON.stringify(data));
+      },
+      getRoomsFromStorage
+    );
   }, []);
 
-  useEffect(() => {
-    if(data.length>0){
-      let data_ = data;
-      data_.sort(function (a, b) {
-        return (b.message_id) - (a.message_id);
-      });
-      setData(data_);
-      AsyncStorage.setItem('room', JSON.stringify(data_));
-      setUpdate(update+1);
-    }
-  }, [data]);
 
   useFocusEffect(
     React.useCallback(() => {
-      Services.get('chat/getRooms',setData,get_data_from_storage);
+      refreshRooms();
 
       return () => {};
     }, [])
   );
   
-  const get_data_from_storage = async() => {
-    const data_stored = await AsyncStorage.getItem('room');
-    if(data_stored) setData(JSON.parse(data_stored));
+  const refreshRooms = () => {
+    Services.get_rooms(
+      (data)=>{
+        setRooms(data);
+        Chat.joinRooms(data);
+        AsyncStorage.setItem('rooms', JSON.stringify(data));
+      },
+      getRoomsFromStorage
+    );
+  }
+
+  const sortRooms = () => {
+    // if(rooms.length>0){
+    //   let rooms_ = rooms;
+    //   rooms_.sort(function (a, b) {
+    //     return (b.message_id) - (a.message_id);
+    //   });
+    //   setRooms(rooms_);
+    //   AsyncStorage.setItem('rooms', JSON.stringify(rooms_));
+    //   setUpdate(update+1);
+    // }
+
+    // AsyncStorage.setItem('rooms', JSON.stringify(rooms));
+  }
+
+  
+  const getRoomsFromStorage = async() => {
+    const roomsStored = await AsyncStorage.getItem('rooms');
+    console.log('a',roomsStored);
+    if(roomsStored) setRooms(JSON.parse(roomsStored));
   } 
 
   const renderHeaderRight = () => (
     <TouchableOpacity
-      // onPress={() => {navigation.push('search_user_list')} }
-      onPress={() => {console.log(data) }}
+      onPress={() => {navigation.push('search_user_list')} }
     >
        <IconButton
           icon={({ size}) => (
@@ -78,6 +114,7 @@ function ChatScreen({navigation}) {
         bg = '#cbcbcb';
         textColor='#606060';
         status='離線中';
+        // status='';
       }
     }
     else {
@@ -89,11 +126,20 @@ function ChatScreen({navigation}) {
     }
 
     return(
-      <TouchableOpacity onPress={()=>{navigation.push('chatroom',  {group:item})}} style={[styles.item,{backgroundColor: bg}]}>
-        <Avatar.Image size={40} style={{backgroundColor:'rgba(0,0,0,0.1)'}} source={{ uri: pic }} />
-        <Text style={[styles.title,{color: textColor}]}>{title}</Text>
-        {status!=''? <Text style={[styles.status,{color: textColor}]}>{status}</Text> : null }
-        {status=='' && item.unread>0 ? <View style={styles.number}><Text style={{fontSize: 20}}>{item.unread}</Text></View> : null }
+      <TouchableOpacity style={[styles.item,{backgroundColor: bg}]} 
+        onPress = { () => {
+          let loaded = loadedRooms.includes(item.id);
+          navigation.push('chatroom', {group:item,loaded:loaded,loadRoom:(room)=>setLoadedRooms(loadedRooms.concat([room]))})
+        }}
+      >
+        <View style={styles.itemTop}>
+          <Avatar.Image size={40} style={{backgroundColor:'rgba(0,0,0,0.1)'}} source={{ uri: pic }} />
+          <Text style={[styles.title,{color: textColor}]}>{title}</Text>
+          {item.unread>0 ? <View style={styles.number}><Text style={{fontSize: 20}}>{item.unread}</Text></View> :  <Text style={[styles.status,{color: textColor}]}>{status}</Text> }
+        </View>
+        {/* <View style={styles.itemBottom}>
+          <Text style={styles.itemBottomText}>{item.body}</Text>
+        </View> */}
       </TouchableOpacity>
     );
   };
@@ -107,9 +153,9 @@ function ChatScreen({navigation}) {
       >
         <View style={styles.container}> 
           <FlatList
-            data={data}
+            data={rooms}
             renderItem={renderItem}
-            // keyExtractor={(item) => item.id}
+            keyExtractor={item => item.id.toString()}
             extraData={update}
           />
         </View>
@@ -128,9 +174,6 @@ const styles = StyleSheet.create({
   },
   item: {
     width: '100%',
-    flex:0,
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 10,
     marginBottom: 8,
@@ -143,6 +186,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.16,
     shadowRadius: 2.88,
     elevation: 6,
+  },
+  itemTop:{
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  itemBottom:{
+    marginLeft:55,
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  itemBottomText:{
+    fontSize: 13,
+    color:'#444444',
+    // fontStyle:'italic',
   },
   title: {
     marginLeft: 12,

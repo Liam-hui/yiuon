@@ -18,7 +18,6 @@ export default function PopOutOptionFull({text,butTextTop,butTextBot,butFuncTop,
                     <FormButton
                     title={butTextTop}
                     addStyle={{marginTop:50}}
-                    modeValue='contained'
                     labelStyle={{fontSize: 20}}
                     onPress={() => {
                         if(butFuncTop)butFuncTop();
@@ -28,7 +27,6 @@ export default function PopOutOptionFull({text,butTextTop,butTextBot,butFuncTop,
                         <FormButton
                         title={butTextBot}
                         addStyle={{marginTop:20}}
-                        modeValue='contained'
                         labelStyle={{fontSize: 20}}
                         onPress={() => {
                             if(butFuncBot)butFuncBot();

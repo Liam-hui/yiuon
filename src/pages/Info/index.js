@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FlatList, Image, SafeAreaView, View, ImageBackground, StyleSheet, Text, TouchableOpacity,TouchableWithoutFeedback,AsyncStorage } from "react-native";
+import { FlatList, Image, SafeAreaView, View, ImageBackground, StyleSheet, RefreshControl, Text, TouchableOpacity,TouchableWithoutFeedback,AsyncStorage } from "react-native";
 import { Services } from '@/services/';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -9,28 +9,43 @@ function InfoScreen({navigation}) {
   const [page, setPage] = useState(2);
   const [update,setUpdate] = useState(0);
   const [fav,setFav] = useState('');
+  const [refreshing, setRefreshing] = React.useState(false);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      Services.get('events?page=1'+fav,(data) => setData(data.data) );
-      setPage(2);
-      setEnd(false);
+  const init = () =>{
+    Services.get('events?page=1'+fav,(data) => setData(data.data) );
+    setPage(2);
+    setEnd(false);
+  }
 
-      return () => {};
-    }, [])
-  );
+  useEffect(() => {
+    init();
+  }, []);
+
+  //refresh
+  const wait = (timeout) => {
+    return new Promise(resolve => {
+      setTimeout(resolve, timeout);
+    });
+  };
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    init();
+
+    wait(1000).then(() => setRefreshing(false));
+  }, []);
 
   const addToData = (newData) => {
     if(newData.data.length>0) {
       setData(data.concat(newData.data) );
       setPage(page+1);
-      console.log(newData);
+      // console.log(newData);
     }
       else setEnd(true);
   }
 
   const change_like = (index) => {
-    let data_ = data;
+    let data_ = data.slice();
     data_[index].is_fav = !data_[index].is_fav;
     setData(data_);
     setUpdate(update+1);
@@ -41,7 +56,7 @@ function InfoScreen({navigation}) {
     if(item.is_fav) like_url = require("@/img/icon_like-2.png");
     return(
       <TouchableOpacity 
-        onPress={() => navigation.navigate('detail',  {item: item}) } 
+        onPress={() => navigation.navigate('detail',  {item: item, index:index, change:change_like}) }
         style={[styles.item]}
       >
         <Image 
@@ -104,7 +119,11 @@ function InfoScreen({navigation}) {
           onEndReached={(e) => {
             if(!end) Services.get('events?page='+page+fav,addToData);
           }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
           data={data}
+          keyExtractor={item => item.id.toString()}
           renderItem={renderItem}
           extraData={update}
           style={{width:'100%'}}
@@ -115,7 +134,7 @@ function InfoScreen({navigation}) {
     </SafeAreaView>
 
   );
-};
+  };
 
 const styles = StyleSheet.create({
   container: {

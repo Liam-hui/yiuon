@@ -3,7 +3,6 @@ import { createStackNavigator } from '@react-navigation/stack';
 import ChatScreen from '@/pages/Chat';
 import Chatroom from '@/pages/Chat/chatroom';
 import ChatSettingScreen from '@/pages/Chat/chat-setting';
-import AddMemberScreen from '@/pages/Chat/add-member';
 import SearchUserListScreen from '@/pages/Chat/search_user_list';
 import AddNewGroupScreen from '@/pages/Chat/add-group';
 
@@ -21,7 +20,6 @@ export default function ChatStack() {
 
           {/* admin */}
           <Stack.Screen name='chat-setting' component={ChatSettingScreen} />
-          <Stack.Screen name='add-member'initialParams={{ title: "" }} component={AddMemberScreen} />
           <Stack.Screen name='add-group'initialParams={{ title: "新增群組" }} component={AddNewGroupScreen} />
         </Stack.Navigator>
     );
