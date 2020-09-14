@@ -12,16 +12,18 @@ import { Services } from '@/services/';
 import { Chat} from '@/pages/Chat/handle_chat';
 import { chatDatabase } from '@/services/ChatDatabase';
 import{ useSelector,useDispatch } from 'react-redux';
-import { useFocusEffect } from '@react-navigation/native';
+import actions from '@/store/ducks/actions';
+import store from '@/store';
 import { MaterialIcons,Feather,Entypo } from '@expo/vector-icons'; 
 import { ImageManipulator } from 'expo-image-crop'
 import moment from 'moment';
 
 export default function Chatroom({navigation,route}) {
-    let {group,newRoom} = route.params;
+    let {group,newRoom,loaded,loadRoom} = route.params;
     let other;
 
     const userData = useSelector(state => state.auth_state.userData);
+    const newMessages = useSelector(state => state.newMessages);
 
     const [messages, setMessages] = useState([]);
     const [end, setEnd] = useState(false);
@@ -42,8 +44,6 @@ export default function Chatroom({navigation,route}) {
     messagesRef.current = messages;
 
     useEffect(() => {
-        Chat.enterChatroom(receiveMessage,sendSuccess,updateRoomData);
-
         if(group.isPrivate==1) {
             other=0;
             if (group.users.length>1 && group.users[other].id == userData.id) other = 1;
@@ -56,17 +56,24 @@ export default function Chatroom({navigation,route}) {
             right: renderHeaderRight,
         });
 
-        refreshChatroom();
-
+        if(!loaded) {
+            Services.get('chat/getMessages?conversationID='+group.id,
+                (payload) => {
+                    setMessages(dataToMessages(payload.data));
+                    chatDatabase.deleteConversation(group.id);
+                    chatDatabase.insertMessages(dataToMessages(payload.data),group.id);
+                    loadRoom(group.id);
+                },
+                () => {
+                    getMessagesFromStorage
+                    loadRoom(group.id);
+                }
+            );
+        }
+        else {
+            getMessagesFromStorage();
+        }
     }, []) 
-
-    useFocusEffect(
-        React.useCallback(() => {
-            updateRoomData();
-
-        return () => {};
-        }, [])
-      );
 
     const renderHeaderRight = () => (
         <TouchableOpacity
@@ -76,32 +83,6 @@ export default function Chatroom({navigation,route}) {
             <Avatar.Image size={40} style={{backgroundColor:'rgba(0,0,0,0.1)', marginRight:10}} source={{ uri: group.pic }} />
       </TouchableOpacity>
     )
-
-    const refreshChatroom = () => {
-        setMessages([]);
-        setEnd(false);
-        setInitDone(false);
-
-        Services.get('chat/getMessages?conversationID='+group.id,
-            (payload) => {
-                setMessages(dataToMessages(payload.data));
-                chatDatabase.deleteConversation(group.id);
-                chatDatabase.insertMessages(dataToMessages(payload.data),group.id);
-            },
-            () => {
-                getMessagesFromStorage
-            }
-        );
-    }
-
-    const updateRoomData = () => {
-        Services.get_rooms(
-            (rooms)=>{
-                let group_ = rooms.filter(room => room.id == group.id)[0];
-                if(group_) group = group_;
-            },
-        );
-    }
 
     useEffect(() => {
         if(messages.length!=0 && !initDone) {
@@ -121,45 +102,49 @@ export default function Chatroom({navigation,route}) {
 
     }, [messages]) 
 
-    const sendSuccess = (uniqueId) => {
-        messagesRef.current.some(function(item, index){
-            if (item.uniqueId == uniqueId) {
-                if(!item.sent){
-                    let messages_ = messagesRef.current.slice();
-                    messages_[index].sent = true;
-                    messages_[index].fail = false;
-                    setMessages(messages_);
-                    chatDatabase.updateMessage('sent',item.uniqueId,1);
-                    chatDatabase.updateMessage('fail',item.uniqueId,0);
-                    if(newRoom) {
-                        Services.get_rooms((data)=>{Chat.joinRooms(data)});
-                        Chat.kickMember(group.users);
-                        newRoom = false;
+    useEffect(() => {
+        if(initDone||loaded) newMessages.forEach(newMsg=>{
+            // alert(newMsg.text);
+            if(newMsg=='system') alert('yes');
+            else if(newMsg.sent) {
+                messages.some(function(item, index){
+                    if (item.uniqueId == newMsg.device_uniqid) {
+                        if(!item.sent){
+                            let messages_ = messages.slice();
+                            messages_[index].sent = true;
+                            messages_[index].fail = false;
+                            setMessages(messages_);
+                            chatDatabase.updateMessage('sent',item.uniqueId,1);
+                            chatDatabase.updateMessage('fail',item.uniqueId,0);
+                            if(newRoom) {
+                                Services.get_rooms((data)=>{Chat.joinRooms(data)});
+                                Chat.kickMember(group.users);
+                                newRoom = false;
+                            }
+                        }
+                        store.dispatch(actions.removeNewMsgAction(newMsg.id));
+                        return true;
                     }
+                });
+            }
+            else {
+                if(newMsg.conversation_id==group.id) {
+                    if(newMsg.sender.id!=userData.id) {
+                        const new_ = messages.every(function(msg){
+                            return msg.uniqueId != newMsg.device_uniqid;
+                        });
+                        if(new_){
+                            setMessages(dataToMessages([newMsg]).concat(messagesRef.current));
+                            chatDatabase.insertMessages(dataToMessages([newMsg]),group.id);
+                        }
+                    }
+                    // store.dispatch(actions.removeNewMsgAction(newMsg.id));
                 }
-                // store.dispatch(actions.removeNewMsgAction(newMsg.id));
-                return true;
+                store.dispatch(actions.removeNewMsgAction(newMsg.id));
             }
         });
-    }
-
-    const receiveMessage = (newMsg) => {
-        if(newMsg=='system') {
-            updateNewMessages();
-            updateRoomData();
-        }
-        else if(newMsg.conversation_id==group.id) {
-            if(newMsg.sender.id!=userData.id) {
-                const new_ = messagesRef.current.every(function(msg){
-                    return msg.uniqueId != newMsg.device_uniqid;
-                });
-                if(new_){
-                    setMessages(dataToMessages([newMsg]).concat(messagesRef.current));
-                    chatDatabase.insertMessages(dataToMessages([newMsg]),group.id);
-                }
-            }
-        }
-    }
+        
+    }, [newMessages]) 
 
     const getMessagesFromStorage = () => {
         if(!end) chatDatabase.getMessages(group.id,
@@ -169,30 +154,12 @@ export default function Chatroom({navigation,route}) {
                         if(!item.sent) item.fail=true;
                     })
                     setMessages(messages.concat(data));
+                    updateNewMessages(data[0]._id);
                 }
                 // else setEnd(true);
             }
         );
     }
-
-    const updateNewMessages = () => { 
-        let newID = '';
-        if(messagesRef.current.length>0) newID = messagesRef.current[0]._id;
-        Services.get('chat/getMessages?conversationID='+group.id+'&lastID='+newID,
-            (payload) => {
-                payload.data.forEach(newMsg=>{
-                    const new_ = messagesRef.current.every(function(msg){
-                        return newMsg.id != msg._id;
-                    });
-                    if(new_){
-                        setMessages(dataToMessages([newMsg]).concat(messagesRef.current));
-                        chatDatabase.insertMessages(dataToMessages([newMsg]),group.id);
-                    }
-                })
-            },
-        );
-    };
-
 
     const updateOldMessages = () => { 
         if(!end){
@@ -200,12 +167,21 @@ export default function Chatroom({navigation,route}) {
             if(messages.length>0) lastID = messages[messages.length-1]._id;
             Services.get('chat/getMessages?conversationID='+group.id+'&before=y&lastID='+lastID,
                 (payload) => {
-                    setMessages(messagesRef.current.concat(dataToMessages(payload.data)));
+                    setMessages(messages.concat(dataToMessages(payload.data)));
                     // setMessages(dataToMessages(payload.data).concat(messages));
                     chatDatabase.insertMessages(dataToMessages(payload.data),group.id);
                 },
             );
         }
+    };
+
+    const updateNewMessages = (lastId) => { 
+        Services.get('chat/getMessages?conversationID='+group.id+'&lastID='+lastID,
+            (payload) => {
+                setMessages(dataToMessages(payload.data).concat(messages));
+                chatDatabase.insertMessages(dataToMessages(payload.data),group.id);
+            },
+        );
     };
 
     const dataToMessages = (data) => {

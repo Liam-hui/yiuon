@@ -11,6 +11,7 @@ import {Chat} from '@/pages/Chat/handle_chat';
 
 function ChatSettingScreen({navigation,route}) {
 
+  const userData = useSelector(state => state.auth_state.userData);
   const member_type = useSelector(state => state.auth_state.userType);
   let {group,other,title} = route.params;
   const [newTitle, setNewTitle] = useState('');
@@ -146,7 +147,8 @@ function ChatSettingScreen({navigation,route}) {
               }}
               butFuncBot={()=>Services.remove_member_from_group(group.id,selectedItem.id,()=>{
                 group.users = group.users.filter(x => x.id!=selectedItem.id);
-                Chat.messageSystem(group);
+                console.log('bbb',group.id,userData.id);
+                Chat.messageSystem(group.id,userData.id);
                 Chat.kickMember([selectedItem]);
                 setMemberPop(false);
               })}

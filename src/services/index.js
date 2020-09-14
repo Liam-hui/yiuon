@@ -42,8 +42,7 @@ function get(url,set,errorFunc,after) {
   api.get(url, {
   })
   .then((response) => {
-    if(response.data.payload) {
-      // console.log(response.data.payload);
+    if(response.data.status=='success') {
       set(response.data.payload);
       if(after) after();
     }
@@ -236,7 +235,6 @@ function two_people_chat(targetID,set) {
   .then((response) => {
     console.log(response.data.payload);
     set(response.data.payload);
-    Chat.kickMember(response.data.payload.users);
   }, (error) => {
     console.log(error);
   });
@@ -365,6 +363,7 @@ function create_group(members,title,image,after) {
   .then((response) => {
     if(response.data.status=='success') {
       after(response.data.payload);
+      get_rooms((data)=>{Chat.joinRooms(data)});
       Chat.kickMember(response.data.payload.users);
     }
   }, (error) => {

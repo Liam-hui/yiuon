@@ -4,6 +4,7 @@ import store from '@/store';
 import actions from '@/store/ducks/actions';
 import * as FileSystem from 'expo-file-system';
 import * as mime from 'react-native-mime-types';
+import { Services } from '@/services/';
 
 const API_URL = "http://yiuonsocketio.itisdemo.com"
 
@@ -41,11 +42,13 @@ const SOCKET_ACTION = {
 export const Chat = {
    runSocket,
    joinRooms,
+   enterChatroom,
    sendMsg,
    sendFile,
    uniqueId,
    kickMember,
    messageSystem,
+
 };
 
 let socket;
@@ -78,24 +81,29 @@ async function runSocket(rooms,refreshRooms) {
         console.log('joinRoomFail');
         joinRooms(rooms);
     })
-    socket.on(SOCKET_EVENT.serverReceivedMsg, (uniqueId)=>{
-        console.log(SOCKET_EVENT.serverReceivedMsg,uniqueId);
-    })
-    socket.on(SOCKET_EVENT.clientReceivedMsg, (uniqueId)=>{
-        console.log(SOCKET_EVENT.clientReceivedMsg,uniqueId);
-        store.dispatch(actions.msgResponseAction({sent:true,device_uniqid:uniqueId}));
-    })
-    socket.on(SOCKET_EVENT.sendMessageFail, (data)=>{
-        console.log(SOCKET_EVENT.sendMessageFail,data);
-    })
-    socket.on(SOCKET_EVENT.messageReceived, (data)=>{
-        console.log(SOCKET_EVENT.messageReceived, data);
-        store.dispatch(actions.msgResponseAction(data));
-    })
+
     socket.on(SOCKET_EVENT.updateList, ()=>{
         console.log(SOCKET_EVENT.updateList);
         refreshRooms();
     })
+}
+
+function enterChatroom(receiveMessage,sendSuccess,updateRoomData){
+    socket.on(SOCKET_EVENT.serverReceivedMsg, (uniqueId)=>{
+        // console.log(SOCKET_EVENT.serverReceivedMsg,uniqueId);
+    })
+
+    socket.on(SOCKET_EVENT.clientReceivedMsg, (uniqueId)=>{
+        console.log(SOCKET_EVENT.clientReceivedMsg,uniqueId);
+        sendSuccess(uniqueId);
+    })
+
+
+    socket.on(SOCKET_EVENT.messageReceived, (message)=>{
+        // console.log(SOCKET_EVENT.messageReceived, message);
+        receiveMessage(message);
+    })
+
 }
 
 function sendMsg(id,text,uniqueId){
@@ -128,14 +136,14 @@ async function sendFile(mode,id,uri,uniqueId){
 
 function kickMember(users){
     users.forEach(user=>{
-        console.log(user.id);
         socket.emit(SOCKET_ACTION.kickMember,user.id);
     })
 }
 
-function messageSystem(group){
-    group.users.forEach(user=>{
-        console.log(user.id);
-        socket.emit(SOCKET_ACTION.messageSystem,group.id,user.id);
-    })
+function messageSystem(groupId,id){
+    // group.users.forEach(user=>{
+        // console.log(user.id);
+        socket.emit(SOCKET_ACTION.messageSystem,groupId,id);
+    // })
 }
+

@@ -7,6 +7,7 @@ import{useSelector,useDispatch} from 'react-redux';
 import {Chat} from '@/pages/Chat/handle_chat';
 
 function SearchUserListScreen({navigation,route}) {
+  const userData = useSelector(state => state.auth_state.userData);
   const {add_group,add_member,exist_members,id} = route.params;
   const member_type = useSelector(state => state.auth_state.userType);
 
@@ -172,6 +173,8 @@ function SearchUserListScreen({navigation,route}) {
 
                 if(add_member&&selected.length>0){
                   Services.add_member_to_group(id,selected,()=>{
+                    console.log('aaa',id,userData.id);
+                    Chat.messageSystem(id,userData.id);
                     Chat.kickMember(selected);
                     route.params.onGoBack(selected);
                     navigation.goBack({added:selected});
